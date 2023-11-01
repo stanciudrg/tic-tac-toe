@@ -9,6 +9,15 @@
     font-style: normal;
 }
 
+/* Medium */
+
+@font-face {
+    font-family: "Archivo";
+    src: url(fonts/Archivo-Medium.ttf);
+    font-weight: 500;
+    font-style: normal
+}
+
 
 /* Semibold */
 
@@ -22,7 +31,6 @@
 
 * {
     font-family: 'Archivo', system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
-    letter-spacing: 0.5px;
 }
 
 body {
@@ -106,12 +114,13 @@ button {
 .change-opponent span:nth-child(3) {
     display: flex;
     flex-direction: column;
-    transition: 0.3s;
+    transition: 0.3s color;
 }
 
 span:nth-child(3) .opponent-difficulty {
     justify-self: center;
     font-size: 0.8rem;
+    font-weight: 500;
     line-height: 0;
     transform: translateY(7px);
 }
@@ -206,7 +215,7 @@ span:nth-child(3) .opponent-difficulty {
     border-top-right-radius: 0.2rem;
     box-shadow: 0px -5px 15px 0px rgba(129, 129, 129, 0.1);
     transform: translateY(30%);
-    transition: 0.3s;
+    transition: 0.3s background-color, 0.3s transform;
 }
 
 #x {
@@ -223,7 +232,7 @@ span:nth-child(3) .opponent-difficulty {
 #zero .score,
 #zero svg {
     transform: translateY(-25%);
-    transition: 0.3s;
+    transition: 0.3s transform;
 }
 
 #x .score,

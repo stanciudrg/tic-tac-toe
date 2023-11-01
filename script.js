@@ -318,12 +318,12 @@ const Game = (function () {
 
             setTimeout(() => {
 
+                InputHandler.playClickSound();
                 Renderer.displayValue(generatedValue, currentPlayer);
                 InputHandler.disableSquare(generatedValue);
                 Panel.addValue(generatedValue, currentPlayer);
-                checkGame();
-
                 InputHandler.enablePanel();
+                checkGame();
 
             }, 500)
 
@@ -649,7 +649,7 @@ const Game = (function () {
 
         }
 
-        return { attachClickEvents, enablePlayButton, disablePlayButton, enablePanel, disablePanel, enableSquares, disableSquare };
+        return { attachClickEvents, playClickSound, enablePlayButton, disablePlayButton, enablePanel, disablePanel, enableSquares, disableSquare };
 
     })()
 
