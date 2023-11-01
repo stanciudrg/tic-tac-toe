@@ -64,6 +64,206 @@ const Players = (function () {
 
 })();
 
+const Computer = (function () {
+
+    const generateRandomValue = () => {
+
+        const mappedSquares = Panel.getPanel().map((square, index) => { if (square == null) { return index } });
+        const filteredSquares = mappedSquares.filter(square => square != undefined);
+        return filteredSquares[~~(Math.random() * filteredSquares.length)];
+
+    }
+
+    const generateValue = (panel, difficulty) => {
+
+        switch (difficulty) {
+
+            case "easy":
+
+                return generateRandomValue()
+                break;
+
+            case "medium":
+
+                if (panel.filter(square => square == 'x').length <= 1) { return generateRandomValue() }
+
+                else {
+
+                    let bestScore = -Infinity;
+                    let bestMove;
+                    let moveScores = [];
+
+                    for (let i = 0; i < panel.length; i++) {
+
+                        if (panel[i] == null) {
+
+                            panel[i] = Players.getPlayerTwo().getValue();
+                            let score = minimax(panel, 0, false);
+                            moveScores.push(score);
+                            panel[i] = null;
+
+                            if (score > bestScore) {
+
+                                bestScore = score;
+                                bestMove = i;
+
+                            }
+
+                        }
+
+                    }
+
+                    if (moveScores.every(moveScore => moveScore === -99)) {
+
+                        bestScore = Infinity;
+
+                        for (let i = 0; i < panel.length; i++) {
+
+                            if (panel[i] == null) {
+
+                                panel[i] = Players.getPlayerOne().getValue();
+                                let score = minimax(panel, 0, true);
+                                panel[i] = null;
+
+                                if (score < bestScore) {
+
+                                    bestScore = score;
+                                    bestMove = i;
+
+                                }
+
+                            }
+
+                        }
+
+                    }
+
+                    return bestMove;
+
+                }
+
+                break;
+
+            case "unbeatable":
+
+                let bestScore = -Infinity;
+                let bestMove;
+                let moveScores = [];
+
+                for (let i = 0; i < panel.length; i++) {
+
+                    if (panel[i] == null) {
+
+                        panel[i] = Players.getPlayerTwo().getValue();
+                        let score = minimax(panel, 0, false);
+                        moveScores.push(score);
+                        panel[i] = null;
+
+                        if (score > bestScore) {
+
+                            bestScore = score;
+                            bestMove = i;
+
+                        }
+
+                    }
+
+                }
+
+                return bestMove;
+
+        }
+
+    }
+
+    const checkGame = (panel, player) => {
+
+        let foundWinner;;
+
+        const filters = [
+
+            [0, 1, 2],
+            [3, 4, 5],
+            [6, 7, 8],
+            [0, 3, 6],
+            [1, 4, 7],
+            [2, 5, 8],
+            [2, 4, 6],
+            [0, 4, 8]
+
+        ];
+
+        const findWinner = (first, second, third) => {
+
+            panel[first] == player && panel[second] == player && panel[third] == player ? foundWinner = true : foundWinner = false;
+
+        }
+
+        for (const filter of filters) {
+
+            if (foundWinner) break;
+            findWinner(...filter);
+
+        }
+
+        return foundWinner;
+
+    }
+
+    const minimax = (panel, depth, isMaximizing) => {
+
+        const availableSquares = panel.filter(square => square == null);
+
+        if (checkGame(panel, Players.getPlayerTwo().getValue())) { return 100 - depth; }
+        else if (checkGame(panel, Players.getPlayerOne().getValue())) { return -100 + depth; }
+        else if (availableSquares.length === 0) { return 0; }
+
+        if (isMaximizing) {
+
+            let bestScore = -Infinity;
+
+            for (let i = 0; i < panel.length; i++) {
+
+                if (panel[i] == null) {
+
+                    panel[i] = Players.getPlayerTwo().getValue();
+                    let score = minimax(panel, depth + 1, false);
+                    panel[i] = null;
+                    bestScore = Math.max(score, bestScore);
+
+                }
+
+            }
+
+            return bestScore;
+
+        } else {
+
+            let bestScore = Infinity;
+
+            for (let i = 0; i < panel.length; i++) {
+
+                if (panel[i] == null) {
+
+                    panel[i] = Players.getPlayerOne().getValue();
+                    let score = minimax(panel, depth + 1, true);
+                    panel[i] = null;
+                    bestScore = Math.min(score, bestScore);
+
+                }
+
+            }
+
+            return bestScore;
+
+        }
+
+    }
+
+    return { generateValue }
+
+})();
+
 const Controller = (function () {
 
     let currentPlayer = Players.getPlayerOne();
