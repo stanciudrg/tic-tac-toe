@@ -289,6 +289,7 @@ span:nth-child(3) .opponent-difficulty {
     align-self: center;
     background-image: linear-gradient(to right, #7fffd4, #9370d8);
     animation: rotate 15s linear infinite;
+    will-change: transform;
 }
 
 @keyframes rotate {

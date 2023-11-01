@@ -413,9 +413,9 @@ const Game = (function () {
             Renderer.hideWinner(currentPlayer);
             currentPlayer = Players.getPlayerOne();
             Renderer.displayTurn(currentPlayer);
-            InputHandler.disablePlayButton();
             InputHandler.enablePanel();
             InputHandler.enableSquares();
+            InputHandler.disablePlayButton();
             Panel.createPanel();
 
         }
@@ -423,7 +423,6 @@ const Game = (function () {
         const endGame = (condition) => {
 
             InputHandler.disablePanel();
-            InputHandler.enablePlayButton();
 
             const gameWon = () => {
 
@@ -436,6 +435,8 @@ const Game = (function () {
             const tie = () => { Renderer.hideTurn(currentPlayer); }
 
             condition == 'winner' ? gameWon() : tie();
+
+            InputHandler.enablePlayButton();
 
         }
 
@@ -561,13 +562,6 @@ const Game = (function () {
 
     const InputHandler = (function () {
 
-        const isMobile = () => {
-
-            const regex = /Mobi|Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i;
-            return regex.test(navigator.userAgent);
-
-        }
-
         const audio = new Audio("click.wav");
 
         const playClickSound = () => {
@@ -575,18 +569,26 @@ const Game = (function () {
             const AudioContext = window.AudioContext || window.webkitAudioContext;
             const audioCtx = new AudioContext();
 
-            audio.currentTime = 0;
-            audio.play();
+            const isMobile = () => {
+
+                const regex = /Mobi|Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i;
+                return regex.test(navigator.userAgent);
+
+            }
+
+            if (!isMobile()) {
+
+                audio.currentTime = 0;
+                audio.play();
+
+
+            }
 
         }
 
-        if (!isMobile()) {
-
-            Renderer.getOpponentButton().addEventListener('click', playClickSound);
-            Renderer.getResetButton().addEventListener('click', playClickSound);
-            Renderer.getPlayAgainButton().addEventListener('click', playClickSound);
-
-        }
+        Renderer.getOpponentButton().addEventListener('click', playClickSound);
+        Renderer.getResetButton().addEventListener('click', playClickSound);
+        Renderer.getPlayAgainButton().addEventListener('click', playClickSound);
 
         Renderer.getOpponentButton().addEventListener('click', Controller.changeOpponent);
         Renderer.getResetButton().addEventListener('click', Controller.resetScore);
@@ -596,7 +598,7 @@ const Game = (function () {
 
             for (let square of Renderer.getSquares()) {
 
-                if (!isMobile()) { square.addEventListener('click', playClickSound); }
+                square.addEventListener('click', playClickSound);
                 square.addEventListener('click', Controller.playTurn);
 
             }
