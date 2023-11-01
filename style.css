@@ -187,3 +187,186 @@ span:nth-child(3) .opponent-difficulty {
     }
 
 }
+
+.container {
+    justify-self: center;
+    display: grid;
+    grid-template-rows: 40px auto;
+    grid-template-columns: auto auto;
+}
+
+#x,
+#zero {
+    z-index: -1;
+    width: 90px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background-color: #858585;
+    border-top-left-radius: 0.2rem;
+    border-top-right-radius: 0.2rem;
+    box-shadow: 0px -5px 15px 0px rgba(129, 129, 129, 0.1);
+    transform: translateY(30%);
+    transition: 0.3s;
+}
+
+#x {
+    padding: 0 10px 0 3px;
+}
+
+#zero {
+    padding: 0 3px 0 10px;
+    justify-self: end;
+}
+
+#x .score,
+#x svg,
+#zero .score,
+#zero svg {
+    transform: translateY(-25%);
+    transition: 0.3s;
+}
+
+#x .score,
+#zero .score {
+    font-family: 'IBMPlexMono', system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+    font-size: 1.1rem;
+    font-weight: 500;
+    line-height: normal;
+}
+
+#x.show {
+    background-color: #85d2d5;
+}
+
+#zero.show {
+    background-color: #8f8dd7;
+}
+
+#x.show.winner,
+#zero.show.winner {
+    transform: translateY(0);
+}
+
+#x.show.winner .score,
+#x.show.winner svg,
+#zero.show.winner .score,
+#zero.show.winner svg {
+    transform: translateY(0);
+}
+
+.panel-container {
+    overflow: hidden;
+    grid-column: 1 / 3;
+    position: relative;
+    display: grid;
+    grid-template-columns: 100px 100px 100px;
+    grid-template-rows: 100px 100px 100px;
+    background-color: transparent;
+    border-bottom-left-radius: 0.3rem;
+    border-bottom-right-radius: 0.3rem;
+    box-shadow: 0px 5px 15px 0px rgba(0, 0, 0, 0.2);
+    gap: 2px;
+    padding: 2px;
+    touch-action: none;
+}
+
+.panel-container::before {
+    content: "";
+    z-index: -1;
+    position: absolute;
+    width: 150%;
+    height: 150%;
+    justify-self: center;
+    align-self: center;
+    background-image: linear-gradient(to right, #7fffd4, #9370d8);
+    animation: rotate 15s linear infinite;
+}
+
+@keyframes rotate {
+
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.square {
+    position: relative;
+    font-size: 0px;
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    transition: 0.3s background-color;
+}
+
+.square:nth-child(7) {
+    border-bottom-left-radius: 0.2rem
+}
+
+.square:nth-child(9) {
+    border-bottom-right-radius: 0.2rem
+}
+
+.square:empty:hover {
+    cursor: pointer;
+    background-color: rgba(255, 255, 255, 0.5);
+}
+
+.square.winner {
+    background-color: rgba(255, 255, 255, 0.9);
+}
+
+.square.winner:hover {
+    background-color: rgba(255, 255, 255, 0.9);
+}
+
+.square::before {
+    content: "";
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
+    transform-origin: center;
+}
+
+.square.x::before {
+    background-image: url(svg/x.svg);
+    animation: mark 0.3s;
+    animation-fill-mode: forwards;
+}
+
+.square.zero::before {
+    background-image: url(svg/circle.svg);
+    animation: mark 0.3s;
+    animation-fill-mode: forwards;
+}
+
+.square.x.winner::before {
+    background-image: url(svg/x-winner.svg);
+}
+
+.square.zero.winner::before {
+    background-image: url(svg/circle-winner.svg);
+}
+
+@keyframes mark {
+
+    0% {
+        transform: scale(0);
+    }
+
+    50% {
+        transform: scale(120%);
+    }
+
+    100% {
+        transform: scale(100%);
+    }
+
+}
