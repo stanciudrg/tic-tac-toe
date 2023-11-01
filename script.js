@@ -1,93 +1,152 @@
-const Panel = (function () {
+const Game = (function () {
 
-    let panel = [];
+    const Panel = (function () {
 
-    const createPanel = () => {
+        let panel = [];
 
-        for (let i = 0; i < 9; i += 1) {
+        const createPanel = () => {
 
-            panel[i] = null;
+            for (let i = 0; i < 9; i += 1) {
+
+                panel[i] = null;
+
+            }
 
         }
 
-    }
+        const addValue = (index, currentPlayer) => {
 
-    const addValue = (index, currentPlayer) => {
+            panel[index] = currentPlayer.getValue();
 
-        panel[index] = currentPlayer.getValue();
+        }
 
-    }
+        const getPanel = () => panel;
 
-    const getPanel = () => panel;
+        return { createPanel, addValue, getPanel };
 
-    return { createPanel, addValue, getPanel };
+    })();
 
-})();
+    const Players = (function () {
 
-const Players = (function () {
+        const playerOne = createPlayer();
+        playerOne.setType("Player");
+        playerOne.setValue("x");
 
-    const playerOne = createPlayer();
-    playerOne.setType("Player");
-    playerOne.setValue("x");
+        const playerTwo = createPlayer();
+        playerTwo.setType("Player");
+        playerTwo.setValue("zero");
 
-    const playerTwo = createPlayer();
-    playerTwo.setType("Player");
-    playerTwo.setValue("zero");
+        function createPlayer() {
 
-    function createPlayer() {
+            let type;
+            const setType = (newType) => type = newType;
+            const getType = () => type;
 
-        let type;
-        const setType = (newType) => type = newType;
-        const getType = () => type;
+            let difficulty;
+            const setDifficulty = (newDifficulty) => difficulty = newDifficulty;
+            const getDifficulty = () => difficulty
 
-        let difficulty;
-        const setDifficulty = (newDifficulty) => difficulty = newDifficulty;
-        const getDifficulty = () => difficulty
+            let value;
+            const setValue = (newValue) => value = newValue;
+            const getValue = () => value;
 
-        let value;
-        const setValue = (newValue) => value = newValue;
-        const getValue = () => value;
+            let score = 0;
+            const getScore = () => score > 0 ? score : "-";
+            const addScore = () => score++;
+            const resetScore = () => score = 0;
 
-        let score = 0;
-        const getScore = () => score > 0 ? score : "-";
-        const addScore = () => score++;
-        const resetScore = () => score = 0;
+            return { setType, getType, setDifficulty, getDifficulty, getValue, setValue, addScore, getScore, resetScore };
 
-        return { setType, getType, setDifficulty, getDifficulty, getValue, setValue, addScore, getScore, resetScore };
+        }
 
-    }
+        const getPlayerOne = () => playerOne;
+        const getPlayerTwo = () => playerTwo;
 
-    const getPlayerOne = () => playerOne;
-    const getPlayerTwo = () => playerTwo;
+        return { getPlayerOne, getPlayerTwo }
 
-    return { getPlayerOne, getPlayerTwo }
+    })();
 
-})();
+    const Computer = (function () {
 
-const Computer = (function () {
+        const generateRandomValue = () => {
 
-    const generateRandomValue = () => {
+            const mappedSquares = Panel.getPanel().map((square, index) => { if (square == null) { return index } });
+            const filteredSquares = mappedSquares.filter(square => square != undefined);
+            return filteredSquares[~~(Math.random() * filteredSquares.length)];
 
-        const mappedSquares = Panel.getPanel().map((square, index) => { if (square == null) { return index } });
-        const filteredSquares = mappedSquares.filter(square => square != undefined);
-        return filteredSquares[~~(Math.random() * filteredSquares.length)];
+        }
 
-    }
+        const generateValue = (panel, difficulty) => {
 
-    const generateValue = (panel, difficulty) => {
+            switch (difficulty) {
 
-        switch (difficulty) {
+                case "easy":
 
-            case "easy":
+                    return generateRandomValue()
+                    break;
 
-                return generateRandomValue()
-                break;
+                case "medium":
 
-            case "medium":
+                    if (panel.filter(square => square == 'x').length <= 1) { return generateRandomValue() }
 
-                if (panel.filter(square => square == 'x').length <= 1) { return generateRandomValue() }
+                    else {
 
-                else {
+                        let bestScore = -Infinity;
+                        let bestMove;
+                        let moveScores = [];
+
+                        for (let i = 0; i < panel.length; i++) {
+
+                            if (panel[i] == null) {
+
+                                panel[i] = Players.getPlayerTwo().getValue();
+                                let score = minimax(panel, 0, false);
+                                moveScores.push(score);
+                                panel[i] = null;
+
+                                if (score > bestScore) {
+
+                                    bestScore = score;
+                                    bestMove = i;
+
+                                }
+
+                            }
+
+                        }
+
+                        if (moveScores.every(moveScore => moveScore === -99)) {
+
+                            bestScore = Infinity;
+
+                            for (let i = 0; i < panel.length; i++) {
+
+                                if (panel[i] == null) {
+
+                                    panel[i] = Players.getPlayerOne().getValue();
+                                    let score = minimax(panel, 0, true);
+                                    panel[i] = null;
+
+                                    if (score < bestScore) {
+
+                                        bestScore = score;
+                                        bestMove = i;
+
+                                    }
+
+                                }
+
+                            }
+
+                        }
+
+                        return bestMove;
+
+                    }
+
+                    break;
+
+                case "unbeatable":
 
                     let bestScore = -Infinity;
                     let bestMove;
@@ -113,540 +172,492 @@ const Computer = (function () {
 
                     }
 
-                    if (moveScores.every(moveScore => moveScore === -99)) {
-
-                        bestScore = Infinity;
-
-                        for (let i = 0; i < panel.length; i++) {
-
-                            if (panel[i] == null) {
-
-                                panel[i] = Players.getPlayerOne().getValue();
-                                let score = minimax(panel, 0, true);
-                                panel[i] = null;
-
-                                if (score < bestScore) {
-
-                                    bestScore = score;
-                                    bestMove = i;
-
-                                }
-
-                            }
-
-                        }
-
-                    }
-
                     return bestMove;
 
-                }
+            }
 
-                break;
+        }
 
-            case "unbeatable":
+        const checkGame = (panel, player) => {
+
+            let foundWinner;;
+
+            const filters = [
+
+                [0, 1, 2],
+                [3, 4, 5],
+                [6, 7, 8],
+                [0, 3, 6],
+                [1, 4, 7],
+                [2, 5, 8],
+                [2, 4, 6],
+                [0, 4, 8]
+
+            ];
+
+            const findWinner = (first, second, third) => {
+
+                panel[first] == player && panel[second] == player && panel[third] == player ? foundWinner = true : foundWinner = false;
+
+            }
+
+            for (const filter of filters) {
+
+                if (foundWinner) break;
+                findWinner(...filter);
+
+            }
+
+            return foundWinner;
+
+        }
+
+        const minimax = (panel, depth, isMaximizing) => {
+
+            const availableSquares = panel.filter(square => square == null);
+
+            if (checkGame(panel, Players.getPlayerTwo().getValue())) { return 100 - depth; }
+            else if (checkGame(panel, Players.getPlayerOne().getValue())) { return -100 + depth; }
+            else if (availableSquares.length === 0) { return 0; }
+
+            if (isMaximizing) {
 
                 let bestScore = -Infinity;
-                let bestMove;
-                let moveScores = [];
 
                 for (let i = 0; i < panel.length; i++) {
 
                     if (panel[i] == null) {
 
                         panel[i] = Players.getPlayerTwo().getValue();
-                        let score = minimax(panel, 0, false);
-                        moveScores.push(score);
+                        let score = minimax(panel, depth + 1, false);
                         panel[i] = null;
-
-                        if (score > bestScore) {
-
-                            bestScore = score;
-                            bestMove = i;
-
-                        }
+                        bestScore = Math.max(score, bestScore);
 
                     }
 
                 }
 
-                return bestMove;
+                return bestScore;
 
-        }
+            } else {
 
-    }
+                let bestScore = Infinity;
 
-    const checkGame = (panel, player) => {
+                for (let i = 0; i < panel.length; i++) {
 
-        let foundWinner;;
+                    if (panel[i] == null) {
 
-        const filters = [
+                        panel[i] = Players.getPlayerOne().getValue();
+                        let score = minimax(panel, depth + 1, true);
+                        panel[i] = null;
+                        bestScore = Math.min(score, bestScore);
 
-            [0, 1, 2],
-            [3, 4, 5],
-            [6, 7, 8],
-            [0, 3, 6],
-            [1, 4, 7],
-            [2, 5, 8],
-            [2, 4, 6],
-            [0, 4, 8]
-
-        ];
-
-        const findWinner = (first, second, third) => {
-
-            panel[first] == player && panel[second] == player && panel[third] == player ? foundWinner = true : foundWinner = false;
-
-        }
-
-        for (const filter of filters) {
-
-            if (foundWinner) break;
-            findWinner(...filter);
-
-        }
-
-        return foundWinner;
-
-    }
-
-    const minimax = (panel, depth, isMaximizing) => {
-
-        const availableSquares = panel.filter(square => square == null);
-
-        if (checkGame(panel, Players.getPlayerTwo().getValue())) { return 100 - depth; }
-        else if (checkGame(panel, Players.getPlayerOne().getValue())) { return -100 + depth; }
-        else if (availableSquares.length === 0) { return 0; }
-
-        if (isMaximizing) {
-
-            let bestScore = -Infinity;
-
-            for (let i = 0; i < panel.length; i++) {
-
-                if (panel[i] == null) {
-
-                    panel[i] = Players.getPlayerTwo().getValue();
-                    let score = minimax(panel, depth + 1, false);
-                    panel[i] = null;
-                    bestScore = Math.max(score, bestScore);
+                    }
 
                 }
 
-            }
-
-            return bestScore;
-
-        } else {
-
-            let bestScore = Infinity;
-
-            for (let i = 0; i < panel.length; i++) {
-
-                if (panel[i] == null) {
-
-                    panel[i] = Players.getPlayerOne().getValue();
-                    let score = minimax(panel, depth + 1, true);
-                    panel[i] = null;
-                    bestScore = Math.min(score, bestScore);
-
-                }
+                return bestScore;
 
             }
 
-            return bestScore;
+        }
+
+        return { generateValue }
+
+    })();
+
+    const Controller = (function () {
+
+        let currentPlayer = Players.getPlayerOne();
+
+        const changeOpponent = () => {
+
+            const opponent = Players.getPlayerTwo()
+            const opponentType = opponent.getType();
+            const opponentDifficulty = opponent.getDifficulty();
+
+            const setValues = (type, difficulty) => {
+
+                opponent.setType(type);
+                opponent.setDifficulty(difficulty);
+
+            }
+
+            if (opponentType == 'Player') { setValues('Computer', 'easy') }
+
+            if (opponentDifficulty == 'easy') { setValues('Computer', 'medium') }
+
+            if (opponentDifficulty == 'medium') { setValues('Computer', 'unbeatable') }
+
+            if (opponentType == 'Computer' && opponentDifficulty == 'unbeatable') { setValues('Player', '') }
+
+            Renderer.displayOpponentType(opponent.getType())
+            Renderer.displayOpponentDifficulty(opponent.getDifficulty())
+
+            resetGame();
+            resetScore();
 
         }
 
-    }
+        const playTurn = (e) => {
 
-    return { generateValue }
-
-})();
-
-const Controller = (function () {
-
-    let currentPlayer = Players.getPlayerOne();
-
-    const changeOpponent = () => {
-
-        const opponent = Players.getPlayerTwo()
-        const opponentType = opponent.getType();
-        const opponentDifficulty = opponent.getDifficulty();
-
-        const setValues = (type, difficulty) => {
-
-            opponent.setType(type);
-            opponent.setDifficulty(difficulty);
-
-        }
-
-        if (opponentType == 'Player') { setValues('Computer', 'easy') }
-
-        if (opponentDifficulty == 'easy') { setValues('Computer', 'medium') }
-
-        if (opponentDifficulty == 'medium') { setValues('Computer', 'unbeatable') }
-
-        if (opponentType == 'Computer' && opponentDifficulty == 'unbeatable') { setValues('Player', '') }
-
-        Renderer.displayOpponentType(opponent.getType())
-        Renderer.displayOpponentDifficulty(opponent.getDifficulty())
-
-        resetGame();
-        resetScore();
-
-    }
-
-    const playTurn = (e) => {
-
-        Renderer.displayValue(e.target.dataset.index, currentPlayer);
-        InputHandler.disableSquare(e.target.dataset.index);
-        Panel.addValue(e.target.dataset.index, currentPlayer);
-        checkGame();
-
-        if (currentPlayer.getType() == 'Computer') { playComputerTurn() }
-
-    }
-
-    const playComputerTurn = () => {
-
-        InputHandler.disablePanel();
-
-        const generatedValue = Computer.generateValue(Panel.getPanel(), currentPlayer.getDifficulty());
-
-        setTimeout(() => {
-
-            Renderer.displayValue(generatedValue, currentPlayer);
-            InputHandler.disableSquare(generatedValue);
-            Panel.addValue(generatedValue, currentPlayer);
+            Renderer.displayValue(e.target.dataset.index, currentPlayer);
+            InputHandler.disableSquare(e.target.dataset.index);
+            Panel.addValue(e.target.dataset.index, currentPlayer);
             checkGame();
 
-            InputHandler.enablePanel();
+            if (currentPlayer.getType() == 'Computer') { playComputerTurn() }
 
-        }, 500)
+        }
 
-    }
+        const playComputerTurn = () => {
 
-    const checkGame = () => {
+            InputHandler.disablePanel();
 
-        let gameEnded;
-        const panel = Panel.getPanel();
-        const currentPlayerValue = currentPlayer.getValue();
+            const generatedValue = Computer.generateValue(Panel.getPanel(), currentPlayer.getDifficulty());
 
-        const filters = [
+            setTimeout(() => {
 
-            [0, 1, 2],
-            [3, 4, 5],
-            [6, 7, 8],
-            [0, 3, 6],
-            [1, 4, 7],
-            [2, 5, 8],
-            [2, 4, 6],
-            [0, 4, 8]
+                Renderer.displayValue(generatedValue, currentPlayer);
+                InputHandler.disableSquare(generatedValue);
+                Panel.addValue(generatedValue, currentPlayer);
+                checkGame();
 
-        ];
+                InputHandler.enablePanel();
 
-        const findWinner = (first, second, third) => {
+            }, 500)
 
-            if (
+        }
 
-                panel[first] == currentPlayerValue &&
-                panel[second] == currentPlayerValue &&
-                panel[third] == currentPlayerValue
+        const checkGame = () => {
 
-            ) {
+            let gameEnded;
+            const panel = Panel.getPanel();
+            const currentPlayerValue = currentPlayer.getValue();
+
+            const filters = [
+
+                [0, 1, 2],
+                [3, 4, 5],
+                [6, 7, 8],
+                [0, 3, 6],
+                [1, 4, 7],
+                [2, 5, 8],
+                [2, 4, 6],
+                [0, 4, 8]
+
+            ];
+
+            const findWinner = (first, second, third) => {
+
+                if (
+
+                    panel[first] == currentPlayerValue &&
+                    panel[second] == currentPlayerValue &&
+                    panel[third] == currentPlayerValue
+
+                ) {
+
+                    gameEnded = true;
+                    Renderer.displayWinningPath(first, second, third);
+                    endGame("winner");
+
+                }
+
+            }
+
+            for (const filter of filters) {
+
+                if (gameEnded) break;
+
+                findWinner(...filter);
+
+            }
+
+            if (!gameEnded && panel.every(value => value != null)) {
 
                 gameEnded = true;
-                Renderer.displayWinningPath(first, second, third);
-                endGame("winner");
+                endGame();
+
+            }
+
+            if (!gameEnded) {
+
+                switchPlayerTurn();
+                Renderer.displayTurn(currentPlayer);
 
             }
 
         }
 
-        for (const filter of filters) {
+        const switchPlayerTurn = () => {
 
-            if (gameEnded) break;
-
-            findWinner(...filter);
-
-        }
-
-        if (!gameEnded && panel.every(value => value != null)) {
-
-            gameEnded = true;
-            endGame();
+            currentPlayer == Players.getPlayerOne() ?
+                currentPlayer = Players.getPlayerTwo() :
+                currentPlayer = Players.getPlayerOne();
 
         }
 
-        if (!gameEnded) {
+        const resetScore = () => {
 
-            switchPlayerTurn();
-            Renderer.displayTurn(currentPlayer);
-
-        }
-
-    }
-
-    const switchPlayerTurn = () => {
-
-        currentPlayer == Players.getPlayerOne() ?
-            currentPlayer = Players.getPlayerTwo() :
-            currentPlayer = Players.getPlayerOne();
-
-    }
-
-    const resetScore = () => {
-
-        Players.getPlayerOne().resetScore();
-        Players.getPlayerTwo().resetScore();
-        Renderer.updateScore(Players.getPlayerOne(), Players.getPlayerTwo());
-
-    }
-
-    const resetGame = () => {
-
-        Renderer.refreshPanel();
-        Renderer.removeWinningPath();
-        Renderer.hideWinner(currentPlayer);
-        currentPlayer = Players.getPlayerOne();
-        Renderer.displayTurn(currentPlayer);
-        InputHandler.disablePlayButton();
-        InputHandler.enablePanel();
-        InputHandler.enableSquares();
-        Panel.createPanel();
-
-    }
-
-    const endGame = (condition) => {
-
-        InputHandler.disablePanel();
-        InputHandler.enablePlayButton();
-
-        const gameWon = () => {
-
-            currentPlayer.addScore();
-            Renderer.displayWinner(currentPlayer);
+            Players.getPlayerOne().resetScore();
+            Players.getPlayerTwo().resetScore();
             Renderer.updateScore(Players.getPlayerOne(), Players.getPlayerTwo());
 
         }
 
-        const tie = () => { Renderer.hideTurn(currentPlayer); }
+        const resetGame = () => {
 
-        condition == 'winner' ? gameWon() : tie();
+            Renderer.refreshPanel();
+            Renderer.removeWinningPath();
+            Renderer.hideWinner(currentPlayer);
+            currentPlayer = Players.getPlayerOne();
+            Renderer.displayTurn(currentPlayer);
+            InputHandler.disablePlayButton();
+            InputHandler.enablePanel();
+            InputHandler.enableSquares();
+            Panel.createPanel();
 
-    }
+        }
 
-    return { changeOpponent, resetGame, resetScore, checkGame, playTurn };
+        const endGame = (condition) => {
+
+            InputHandler.disablePanel();
+            InputHandler.enablePlayButton();
+
+            const gameWon = () => {
+
+                currentPlayer.addScore();
+                Renderer.displayWinner(currentPlayer);
+                Renderer.updateScore(Players.getPlayerOne(), Players.getPlayerTwo());
+
+            }
+
+            const tie = () => { Renderer.hideTurn(currentPlayer); }
+
+            condition == 'winner' ? gameWon() : tie();
+
+        }
+
+        return { changeOpponent, resetGame, resetScore, checkGame, playTurn };
+
+    })();
+
+    const Renderer = (function () {
+
+        const opponentButton = document.querySelector('.change-opponent');
+        const resetButton = document.querySelector('.reset-score');
+        const playAgainButton = document.querySelector('.play-again');
+        const panelContainer = document.querySelector('.panel-container');
+        const squares = panelContainer.getElementsByClassName('square');
+
+        const getOpponentButton = () => opponentButton;
+        const getResetButton = () => resetButton;
+        const getPlayAgainButton = () => playAgainButton;
+        const getPanelContainer = () => panelContainer;
+        const getSquares = () => squares;
+
+
+        const renderPanel = () => {
+
+            panelContainer.textContent = "";
+
+            Panel.getPanel().forEach((value, index) => {
+
+                const square = document.createElement("button");
+                square.dataset.index = index;
+                square.classList.add("square");
+                panelContainer.appendChild(square);
+
+            })
+
+        };
+
+        const refreshPanel = () => {
+
+            for (let square of squares) {
+
+                square.classList.remove('x');
+                square.classList.remove('zero');
+                square.textContent = "";
+
+            }
+
+        }
+
+        const displayOpponentType = (opponentType) => {
+
+            opponentButton.querySelector('.opponent-type').textContent = opponentType;
+
+        }
+
+        const displayOpponentDifficulty = (opponentDifficulty) => {
+
+            opponentButton.querySelector('.opponent-difficulty').textContent = opponentDifficulty;
+
+        }
+
+        const displayValue = (index, currentPlayer) => {
+
+            squares[index].classList.add(currentPlayer.getValue());
+            squares[index].textContent = ".";
+
+        }
+
+
+        const displayTurn = (currentPlayer) => {
+
+            document.getElementById(currentPlayer.getValue()).classList.add('show');
+            document.getElementById(currentPlayer.getValue() == "x" ? "zero" : "x").classList.remove('show');
+
+        }
+
+        const hideTurn = (currentPlayer) => {
+
+            document.getElementById(currentPlayer.getValue()).classList.remove('show');
+
+        }
+
+        const updateScore = (playerOne, playerTwo) => {
+
+            document.getElementById(playerOne.getValue()).lastElementChild.textContent = playerOne.getScore();
+            document.getElementById(playerTwo.getValue()).firstElementChild.textContent = playerTwo.getScore();
+
+        }
+
+        const displayWinner = (winner) => {
+
+            document.getElementById(winner.getValue()).classList.add('winner');
+
+        }
+
+        const hideWinner = (winner) => {
+
+            document.getElementById(winner.getValue()).classList.remove('winner');
+
+        }
+
+        const displayWinningPath = (first, second, third) => {
+
+            squares[first].classList.add('winner');
+            squares[second].classList.add('winner');
+            squares[third].classList.add('winner');
+
+        }
+
+        const removeWinningPath = () => {
+
+            for (let square of squares) {
+
+                square.classList.remove('winner');
+
+            }
+
+        }
+
+        return { getPanelContainer, displayOpponentType, displayOpponentDifficulty, getSquares, getOpponentButton, hideTurn, getResetButton, getPlayAgainButton, renderPanel, refreshPanel, updateScore, displayValue, displayTurn, displayWinner, hideWinner, displayWinningPath, removeWinningPath };
+
+    })();
+
+    const InputHandler = (function () {
+
+        const isMobile = () => {
+
+            const regex = /Mobi|Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i;
+            return regex.test(navigator.userAgent);
+
+        }
+
+        const audio = new Audio("click.wav");
+
+        const playClickSound = () => {
+
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            const audioCtx = new AudioContext();
+
+            audio.currentTime = 0;
+            audio.play();
+
+        }
+
+        if (!isMobile()) {
+
+            Renderer.getOpponentButton().addEventListener('click', playClickSound);
+            Renderer.getResetButton().addEventListener('click', playClickSound);
+            Renderer.getPlayAgainButton().addEventListener('click', playClickSound);
+
+        }
+
+        Renderer.getOpponentButton().addEventListener('click', Controller.changeOpponent);
+        Renderer.getResetButton().addEventListener('click', Controller.resetScore);
+        Renderer.getPlayAgainButton().addEventListener('click', Controller.resetGame);
+
+        const attachClickEvents = () => {
+
+            for (let square of Renderer.getSquares()) {
+
+                if (!isMobile()) { square.addEventListener('click', playClickSound); }
+                square.addEventListener('click', Controller.playTurn);
+
+            }
+
+        }
+
+        const enablePlayButton = () => {
+
+            setTimeout(() => {
+
+                Renderer.getPlayAgainButton().classList.add('clickable');
+                Renderer.getPlayAgainButton().style.pointerEvents = "auto";
+
+            }, 300)
+
+        }
+
+        const disablePlayButton = () => {
+
+            setTimeout(() => {
+
+                Renderer.getPlayAgainButton().classList.remove('clickable');
+                Renderer.getPlayAgainButton().style.pointerEvents = "none";
+
+
+            }, 300)
+
+        }
+
+        const enablePanel = () => {
+            Renderer.getPanelContainer().style.pointerEvents = "auto";
+        }
+
+        const disablePanel = () => {
+            Renderer.getPanelContainer().style.pointerEvents = "none";
+        }
+
+
+        const disableSquare = (index) => {
+
+            Renderer.getSquares()[index].style.pointerEvents = "none";
+
+        }
+
+        const enableSquares = () => {
+
+            for (const square of Renderer.getSquares()) {
+                square.style.pointerEvents = "inherit"
+            }
+
+        }
+
+        return { attachClickEvents, enablePlayButton, disablePlayButton, enablePanel, disablePanel, enableSquares, disableSquare };
+
+    })()
+
+    Panel.createPanel();
+    Renderer.renderPanel();
+    Renderer.displayOpponentType(Players.getPlayerTwo().getType());
+    Renderer.displayTurn(Players.getPlayerOne());
+    InputHandler.attachClickEvents();
 
 })();
 
-const Renderer = (function () {
-
-    const opponentButton = document.querySelector('.change-opponent');
-    const resetButton = document.querySelector('.reset-score');
-    const playAgainButton = document.querySelector('.play-again');
-    const panelContainer = document.querySelector('.panel-container');
-    const squares = panelContainer.getElementsByClassName('square');
-
-    const getOpponentButton = () => opponentButton;
-    const getResetButton = () => resetButton;
-    const getPlayAgainButton = () => playAgainButton;
-    const getPanelContainer = () => panelContainer;
-    const getSquares = () => squares;
-
-
-    const renderPanel = () => {
-
-        panelContainer.textContent = "";
-
-        Panel.getPanel().forEach((value, index) => {
-
-            const square = document.createElement("button");
-            square.dataset.index = index;
-            square.classList.add("square");
-            panelContainer.appendChild(square);
-
-        })
-
-    };
-
-    const refreshPanel = () => {
-
-        for (let square of squares) {
-
-            square.classList.remove('x');
-            square.classList.remove('zero');
-            square.textContent = "";
-
-        }
-
-    }
-
-    const displayOpponentType = (opponentType) => {
-
-        opponentButton.querySelector('.opponent-type').textContent = opponentType;
-
-    }
-
-    const displayOpponentDifficulty = (opponentDifficulty) => {
-
-        opponentButton.querySelector('.opponent-difficulty').textContent = opponentDifficulty;
-
-    }
-
-    const displayValue = (index, currentPlayer) => {
-
-        squares[index].classList.add(currentPlayer.getValue());
-        squares[index].textContent = ".";
-
-    }
-
-
-    const displayTurn = (currentPlayer) => {
-
-        document.getElementById(currentPlayer.getValue()).classList.add('show');
-        document.getElementById(currentPlayer.getValue() == "x" ? "zero" : "x").classList.remove('show');
-
-    }
-
-    const hideTurn = (currentPlayer) => {
-
-        document.getElementById(currentPlayer.getValue()).classList.remove('show');
-
-    }
-
-    const updateScore = (playerOne, playerTwo) => {
-
-        document.getElementById(playerOne.getValue()).lastElementChild.textContent = playerOne.getScore();
-        document.getElementById(playerTwo.getValue()).firstElementChild.textContent = playerTwo.getScore();
-
-    }
-
-    const displayWinner = (winner) => {
-
-        document.getElementById(winner.getValue()).classList.add('winner');
-
-    }
-
-    const hideWinner = (winner) => {
-
-        document.getElementById(winner.getValue()).classList.remove('winner');
-
-    }
-
-    const displayWinningPath = (first, second, third) => {
-
-        squares[first].classList.add('winner');
-        squares[second].classList.add('winner');
-        squares[third].classList.add('winner');
-
-    }
-
-    const removeWinningPath = () => {
-
-        for (let square of squares) {
-
-            square.classList.remove('winner');
-
-        }
-
-    }
-
-    return { getPanelContainer, displayOpponentType, displayOpponentDifficulty, getSquares, getOpponentButton, hideTurn, getResetButton, getPlayAgainButton, renderPanel, refreshPanel, updateScore, displayValue, displayTurn, displayWinner, hideWinner, displayWinningPath, removeWinningPath };
-
-})();
-
-const InputHandler = (function () {
-
-    const isMobile = () => {
-
-        const regex = /Mobi|Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i;
-        return regex.test(navigator.userAgent);
-
-    }
-
-    const audio = new Audio("click.wav");
-
-    const playClickSound = () => {
-
-        const AudioContext = window.AudioContext || window.webkitAudioContext;
-        const audioCtx = new AudioContext();
-
-        audio.currentTime = 0;
-        audio.play();
-
-    }
-
-    if (!isMobile()) {
-
-        Renderer.getOpponentButton().addEventListener('click', playClickSound);
-        Renderer.getResetButton().addEventListener('click', playClickSound);
-        Renderer.getPlayAgainButton().addEventListener('click', playClickSound);
-
-    }
-
-    Renderer.getOpponentButton().addEventListener('click', Controller.changeOpponent);
-    Renderer.getResetButton().addEventListener('click', Controller.resetScore);
-    Renderer.getPlayAgainButton().addEventListener('click', Controller.resetGame);
-
-    const attachClickEvents = () => {
-
-        for (let square of Renderer.getSquares()) {
-
-            if (!isMobile()) { square.addEventListener('click', playClickSound); }
-            square.addEventListener('click', Controller.playTurn);
-
-        }
-
-    }
-
-    const enablePlayButton = () => {
-
-        setTimeout(() => {
-
-            Renderer.getPlayAgainButton().classList.add('clickable');
-            Renderer.getPlayAgainButton().style.pointerEvents = "auto";
-
-        }, 300)
-
-    }
-
-    const disablePlayButton = () => {
-
-        setTimeout(() => {
-
-            Renderer.getPlayAgainButton().classList.remove('clickable');
-            Renderer.getPlayAgainButton().style.pointerEvents = "none";
-
-
-        }, 300)
-
-    }
-
-    const enablePanel = () => {
-        Renderer.getPanelContainer().style.pointerEvents = "auto";
-    }
-
-    const disablePanel = () => {
-        Renderer.getPanelContainer().style.pointerEvents = "none";
-    }
-
-
-    const disableSquare = (index) => {
-
-        Renderer.getSquares()[index].style.pointerEvents = "none";
-
-    }
-
-    const enableSquares = () => {
-
-        for (const square of Renderer.getSquares()) {
-            square.style.pointerEvents = "inherit"
-        }
-
-    }
-
-    return { attachClickEvents, enablePlayButton, disablePlayButton, enablePanel, disablePanel, enableSquares, disableSquare };
-
-})()
