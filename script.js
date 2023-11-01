@@ -64,6 +64,183 @@ const Players = (function () {
 
 })();
 
+const Controller = (function () {
+
+    let currentPlayer = Players.getPlayerOne();
+
+    const changeOpponent = () => {
+
+        const opponent = Players.getPlayerTwo()
+        const opponentType = opponent.getType();
+        const opponentDifficulty = opponent.getDifficulty();
+
+        const setValues = (type, difficulty) => {
+
+            opponent.setType(type);
+            opponent.setDifficulty(difficulty);
+
+        }
+
+        if (opponentType == 'Player') { setValues('Computer', 'easy') }
+
+        if (opponentDifficulty == 'easy') { setValues('Computer', 'medium') }
+
+        if (opponentDifficulty == 'medium') { setValues('Computer', 'unbeatable') }
+
+        if (opponentType == 'Computer' && opponentDifficulty == 'unbeatable') { setValues('Player', '') }
+
+        Renderer.displayOpponentType(opponent.getType())
+        Renderer.displayOpponentDifficulty(opponent.getDifficulty())
+
+        resetGame();
+        resetScore();
+
+    }
+
+    const playTurn = (e) => {
+
+        Renderer.displayValue(e.target.dataset.index, currentPlayer);
+        InputHandler.disableSquare(e.target.dataset.index);
+        Panel.addValue(e.target.dataset.index, currentPlayer);
+        checkGame();
+
+        if (currentPlayer.getType() == 'Computer') { playComputerTurn() }
+
+    }
+
+    const playComputerTurn = () => {
+
+        InputHandler.disablePanel();
+
+        const generatedValue = Computer.generateValue(Panel.getPanel(), currentPlayer.getDifficulty());
+
+        setTimeout(() => {
+
+            Renderer.displayValue(generatedValue, currentPlayer);
+            InputHandler.disableSquare(generatedValue);
+            Panel.addValue(generatedValue, currentPlayer);
+            checkGame();
+
+            InputHandler.enablePanel();
+
+        }, 500)
+
+    }
+
+    const checkGame = () => {
+
+        let gameEnded;
+        const panel = Panel.getPanel();
+        const currentPlayerValue = currentPlayer.getValue();
+
+        const filters = [
+
+            [0, 1, 2],
+            [3, 4, 5],
+            [6, 7, 8],
+            [0, 3, 6],
+            [1, 4, 7],
+            [2, 5, 8],
+            [2, 4, 6],
+            [0, 4, 8]
+
+        ];
+
+        const findWinner = (first, second, third) => {
+
+            if (
+
+                panel[first] == currentPlayerValue &&
+                panel[second] == currentPlayerValue &&
+                panel[third] == currentPlayerValue
+
+            ) {
+
+                gameEnded = true;
+                Renderer.displayWinningPath(first, second, third);
+                endGame("winner");
+
+            }
+
+        }
+
+        for (const filter of filters) {
+
+            if (gameEnded) break;
+
+            findWinner(...filter);
+
+        }
+
+        if (!gameEnded && panel.every(value => value != null)) {
+
+            gameEnded = true;
+            endGame();
+
+        }
+
+        if (!gameEnded) {
+
+            switchPlayerTurn();
+            Renderer.displayTurn(currentPlayer);
+
+        }
+
+    }
+
+    const switchPlayerTurn = () => {
+
+        currentPlayer == Players.getPlayerOne() ?
+            currentPlayer = Players.getPlayerTwo() :
+            currentPlayer = Players.getPlayerOne();
+
+    }
+
+    const resetScore = () => {
+
+        Players.getPlayerOne().resetScore();
+        Players.getPlayerTwo().resetScore();
+        Renderer.updateScore(Players.getPlayerOne(), Players.getPlayerTwo());
+
+    }
+
+    const resetGame = () => {
+
+        Renderer.refreshPanel();
+        Renderer.removeWinningPath();
+        Renderer.hideWinner(currentPlayer);
+        currentPlayer = Players.getPlayerOne();
+        Renderer.displayTurn(currentPlayer);
+        InputHandler.disablePlayButton();
+        InputHandler.enablePanel();
+        InputHandler.enableSquares();
+        Panel.createPanel();
+
+    }
+
+    const endGame = (condition) => {
+
+        InputHandler.disablePanel();
+        InputHandler.enablePlayButton();
+
+        const gameWon = () => {
+
+            currentPlayer.addScore();
+            Renderer.displayWinner(currentPlayer);
+            Renderer.updateScore(Players.getPlayerOne(), Players.getPlayerTwo());
+
+        }
+
+        const tie = () => { Renderer.hideTurn(currentPlayer); }
+
+        condition == 'winner' ? gameWon() : tie();
+
+    }
+
+    return { changeOpponent, resetGame, resetScore, checkGame, playTurn };
+
+})();
+
 const Renderer = (function () {
 
     const opponentButton = document.querySelector('.change-opponent');
