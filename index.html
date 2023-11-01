@@ -8,15 +8,21 @@
     <meta name="author" content="Stanciu Dragos">
     <meta name="description" content="A Tic Tac Toe project made by stanciudrg for The Odin Project JavaScript Course">
     <meta keywords content="HTML, CSS, JavaScript, Project, The Odin Project, JavaScript Course, Tic Tac Toe">
+    <link rel="preload" as="font" href="fonts/Archivo-SemiBold.ttf" type="font/ttf" crossorigin>
+    <link rel="preload" as="font" href="fonts/IBMPlexMono-Medium.ttf" type="font/ttf" crossorigin>
+    <link rel="preload" href="svg/x.svg" as="image">
+    <link rel="preload" href="svg/circle.svg" as="image">
+    <link rel="preload" href="svg/x-winner.svg" as="image">
+    <link rel="preload" href="svg/circle-winner.svg" as="image">
+    <link rel="shortcut icon" href="#">
     <link rel="stylesheet" href="normalize.css">
     <link rel="stylesheet" href="style.css">
     <script src="script.js" defer></script>
 </head>
 
 <body>
-
     <button class="change-opponent clickable"><span>Player</span><span>vs</span><span><span
-                class="opponent-type">Player</span><span class="opponent-difficulty"></span></span></button>
+                class="opponent-type"></span><span class="opponent-difficulty"></span></span></button>
     <button class="reset-score clickable">Reset score</button>
     <button class="play-again">Play again</button>
     <div class="container">
@@ -39,7 +45,6 @@
         </div>
         <div class="panel-container"></div>
     </div>
-
 </body>
 
 </html>
