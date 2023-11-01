@@ -1,0 +1,26 @@
+/* Font-faces */
+
+/* Medium */
+
+@font-face {
+    font-family: "IBMPlexMono";
+    src: url(fonts/IBMPlexMono-Medium.ttf);
+    font-weight: 500;
+    font-style: normal;
+}
+
+
+/* Semibold */
+
+@font-face {
+    font-family: "Archivo";
+    src: url(fonts/Archivo-SemiBold.ttf);
+    font-weight: 600;
+    font-style: normal;
+}
+
+
+* {
+    font-family: 'Archivo', system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+    letter-spacing: 0.5px;
+}
