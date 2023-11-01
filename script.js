@@ -356,3 +356,97 @@ const Renderer = (function () {
     return { getPanelContainer, displayOpponentType, displayOpponentDifficulty, getSquares, getOpponentButton, hideTurn, getResetButton, getPlayAgainButton, renderPanel, refreshPanel, updateScore, displayValue, displayTurn, displayWinner, hideWinner, displayWinningPath, removeWinningPath };
 
 })();
+
+const InputHandler = (function () {
+
+    const isMobile = () => {
+
+        const regex = /Mobi|Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i;
+        return regex.test(navigator.userAgent);
+
+    }
+
+    const audio = new Audio("click.wav");
+
+    const playClickSound = () => {
+
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        const audioCtx = new AudioContext();
+
+        audio.currentTime = 0;
+        audio.play();
+
+    }
+
+    if (!isMobile()) {
+
+        Renderer.getOpponentButton().addEventListener('click', playClickSound);
+        Renderer.getResetButton().addEventListener('click', playClickSound);
+        Renderer.getPlayAgainButton().addEventListener('click', playClickSound);
+
+    }
+
+    Renderer.getOpponentButton().addEventListener('click', Controller.changeOpponent);
+    Renderer.getResetButton().addEventListener('click', Controller.resetScore);
+    Renderer.getPlayAgainButton().addEventListener('click', Controller.resetGame);
+
+    const attachClickEvents = () => {
+
+        for (let square of Renderer.getSquares()) {
+
+            if (!isMobile()) { square.addEventListener('click', playClickSound); }
+            square.addEventListener('click', Controller.playTurn);
+
+        }
+
+    }
+
+    const enablePlayButton = () => {
+
+        setTimeout(() => {
+
+            Renderer.getPlayAgainButton().classList.add('clickable');
+            Renderer.getPlayAgainButton().style.pointerEvents = "auto";
+
+        }, 300)
+
+    }
+
+    const disablePlayButton = () => {
+
+        setTimeout(() => {
+
+            Renderer.getPlayAgainButton().classList.remove('clickable');
+            Renderer.getPlayAgainButton().style.pointerEvents = "none";
+
+
+        }, 300)
+
+    }
+
+    const enablePanel = () => {
+        Renderer.getPanelContainer().style.pointerEvents = "auto";
+    }
+
+    const disablePanel = () => {
+        Renderer.getPanelContainer().style.pointerEvents = "none";
+    }
+
+
+    const disableSquare = (index) => {
+
+        Renderer.getSquares()[index].style.pointerEvents = "none";
+
+    }
+
+    const enableSquares = () => {
+
+        for (const square of Renderer.getSquares()) {
+            square.style.pointerEvents = "inherit"
+        }
+
+    }
+
+    return { attachClickEvents, enablePlayButton, disablePlayButton, enablePanel, disablePanel, enableSquares, disableSquare };
+
+})()
