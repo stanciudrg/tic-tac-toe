@@ -55,7 +55,8 @@ button {
     box-shadow: 0 0 15px 0 #0001;
     padding: 1.5rem;
     transition: .3s transform, .3s color;
-    transition-timing-function: ease-out
+    transition-timing-function: ease-out;
+    will-change: transform, color
 }
 
 .change-opponent,
@@ -87,7 +88,8 @@ button {
     border-bottom-right-radius: .2rem;
     transform: scale(0);
     opacity: 0;
-    transition: .3s transform, .2s opacity
+    transition: .3s transform, .2s opacity;
+    will-change: transform, opacity
 }
 
 .change-opponent span:nth-child(1)::before {
@@ -106,7 +108,8 @@ button {
 .change-opponent span:nth-child(3) {
     display: flex;
     flex-direction: column;
-    transition: .3s color
+    transition: .3s color;
+    will-change: color
 }
 
 span:nth-child(3) .opponent-difficulty {
@@ -114,7 +117,7 @@ span:nth-child(3) .opponent-difficulty {
     font-size: .8rem;
     font-weight: 500;
     line-height: 0;
-    transform: translateY(6px)
+    transform: translateY(6px);
 }
 
 .change-opponent:hover,
@@ -136,20 +139,24 @@ span:nth-child(3) .opponent-difficulty {
     border-radius: .2rem;
     transform: scale(0);
     opacity: 0;
-    transition: .3s transform, .2s opacity
+    transition: .3s transform, .2s opacity;
+    will-change: transform, opacity
 }
 
 .change-opponent.clickable {
     background-image: linear-gradient(to right, #79e9db, #8f7fd9);
 }
 
-.reset-score.clickable {
+.reset-score.clickable,
+.play-again.clickable {
     background-image: none;
+}
+
+.reset-score.clickable {
     background-color: #85d2d5
 }
 
 .play-again.clickable {
-    background-image: none;
     background-color: #8f8dd7;
     transform: translateX(0)
 }
@@ -200,7 +207,8 @@ span:nth-child(3) .opponent-difficulty {
     border-top-right-radius: .2rem;
     box-shadow: 0 -5px 15px 0 #0001;
     transform: translateY(30%);
-    transition: .3s background-color, .3s transform
+    transition: .3s background-color, .3s transform;
+    will-change: transform, background-color
 }
 
 #x {
@@ -217,7 +225,8 @@ span:nth-child(3) .opponent-difficulty {
 #zero .score,
 #zero svg {
     transform: translateY(-25%);
-    transition: .3s transform
+    transition: .3s transform;
+    will-change: transform
 }
 
 #x .score,
@@ -249,25 +258,49 @@ span:nth-child(3) .opponent-difficulty {
 }
 
 .panel-container {
+    overflow: hidden;
     grid-column: 1 / 3;
     position: relative;
     display: grid;
     grid-template-columns: 100px 100px 100px;
     grid-template-rows: 100px 100px 100px;
-    background-image: linear-gradient(to bottom right, #79e9db, #8f7fd9);
     border-bottom-left-radius: .3rem;
     border-bottom-right-radius: .3rem;
     box-shadow: 0 5px 10px 0 #0001;
     gap: 2px;
     padding: 2px;
-    touch-action: none
+    touch-action: none;
+    will-change: transform;
+}
+
+.panel-container::before {
+    content: "";
+    z-index: -1;
+    position: absolute;
+    width: 150%;
+    height: 150%;
+    justify-self: center;
+    align-self: center;
+    background-image: linear-gradient(to right, #79e9db, #8f7fd9);
+    animation: rotate 15s linear infinite;
+}
+
+@keyframes rotate {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 .square {
     position: relative;
     font-size: 0;
     border: 1px solid #fffc;
-    transition: .3s background-color
+    transition: .3s background-color;
+    will-change: background-color
 }
 
 .square:nth-child(7) {
@@ -283,10 +316,7 @@ span:nth-child(3) .opponent-difficulty {
     background-color: #ffffff80
 }
 
-.square.winner {
-    background-color: #ffffffe6
-}
-
+.square.winner,
 .square.winner:hover {
     background-color: #ffffffe6
 }
@@ -304,16 +334,18 @@ span:nth-child(3) .opponent-difficulty {
     transform-origin: center
 }
 
-.square.x::before {
-    background-image: url(svg/x.svg);
+.square.x::before,
+.square.zero::before {
     animation: mark .3s;
     animation-fill-mode: forwards
 }
 
+.square.x::before {
+    background-image: url(svg/x.svg);
+}
+
 .square.zero::before {
     background-image: url(svg/circle.svg);
-    animation: mark .3s;
-    animation-fill-mode: forwards
 }
 
 .square.x.winner::before {

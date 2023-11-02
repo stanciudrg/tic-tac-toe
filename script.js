@@ -318,7 +318,6 @@ const Game = (function () {
 
             setTimeout(() => {
 
-                InputHandler.playClickSound();
                 Renderer.displayValue(generatedValue, currentPlayer);
                 InputHandler.disableSquare(generatedValue);
                 Panel.addValue(generatedValue, currentPlayer);
@@ -440,7 +439,7 @@ const Game = (function () {
 
         }
 
-        return { changeOpponent, resetGame, resetScore, checkGame, playTurn };
+        return { changeOpponent, resetGame, resetScore, playTurn };
 
     })();
 
@@ -556,50 +555,20 @@ const Game = (function () {
 
         }
 
-        return { getPanelContainer, displayOpponentType, displayOpponentDifficulty, getSquares, getOpponentButton, hideTurn, getResetButton, getPlayAgainButton, renderPanel, refreshPanel, updateScore, displayValue, displayTurn, displayWinner, hideWinner, displayWinningPath, removeWinningPath };
+        return { getOpponentButton, getResetButton, getPlayAgainButton, getPanelContainer, getSquares, displayOpponentType, displayOpponentDifficulty, renderPanel, refreshPanel, displayTurn, hideTurn, updateScore, displayValue, displayWinner, hideWinner, displayWinningPath, removeWinningPath };
 
     })();
 
     const InputHandler = (function () {
 
-        const audio = new Audio("click.wav");
-
-        const playClickSound = () => {
-
-            const AudioContext = window.AudioContext || window.webkitAudioContext;
-            const audioCtx = new AudioContext();
-
-            const isMobile = () => {
-
-                const regex = /Mobi|Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i;
-                return regex.test(navigator.userAgent);
-
-            }
-
-            if (!isMobile()) {
-
-                audio.currentTime = 0;
-                audio.play();
-
-
-            }
-
-        }
-
-        Renderer.getOpponentButton().addEventListener('click', playClickSound);
-        Renderer.getOpponentButton().addEventListener('click', Controller.changeOpponent);
-
-        Renderer.getResetButton().addEventListener('click', playClickSound);
+        Renderer.getOpponentButton().addEventListener('click', Controller.changeOpponent);;
         Renderer.getResetButton().addEventListener('click', Controller.resetScore);
-
-        Renderer.getPlayAgainButton().addEventListener('click', playClickSound);
         Renderer.getPlayAgainButton().addEventListener('click', Controller.resetGame);
 
         const attachClickEvents = () => {
 
             for (let square of Renderer.getSquares()) {
 
-                square.addEventListener('click', playClickSound);
                 square.addEventListener('click', Controller.playTurn);
 
             }
@@ -651,7 +620,7 @@ const Game = (function () {
 
         }
 
-        return { attachClickEvents, playClickSound, enablePlayButton, disablePlayButton, enablePanel, disablePanel, enableSquares, disableSquare };
+        return { attachClickEvents, enablePanel, disablePanel, enableSquares, disableSquare, enablePlayButton, disablePlayButton };
 
     })()
 
