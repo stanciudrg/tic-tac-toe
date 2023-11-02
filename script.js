@@ -587,11 +587,12 @@ const Game = (function () {
         }
 
         Renderer.getOpponentButton().addEventListener('click', playClickSound);
-        Renderer.getResetButton().addEventListener('click', playClickSound);
-        Renderer.getPlayAgainButton().addEventListener('click', playClickSound);
-
         Renderer.getOpponentButton().addEventListener('click', Controller.changeOpponent);
+
+        Renderer.getResetButton().addEventListener('click', playClickSound);
         Renderer.getResetButton().addEventListener('click', Controller.resetScore);
+
+        Renderer.getPlayAgainButton().addEventListener('click', playClickSound);
         Renderer.getPlayAgainButton().addEventListener('click', Controller.resetGame);
 
         const attachClickEvents = () => {
@@ -622,7 +623,6 @@ const Game = (function () {
 
                 Renderer.getPlayAgainButton().classList.remove('clickable');
                 Renderer.getPlayAgainButton().style.pointerEvents = "none";
-
 
             }, 300)
 
