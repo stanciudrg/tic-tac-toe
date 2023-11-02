@@ -1,3 +1,5 @@
+/* Font declarations */
+
 @font-face {
     font-family: "IBMPlexMono";
     src: url(fonts/IBMPlexMono-Medium.ttf);
@@ -24,15 +26,19 @@
 
 * {
     font-family: 'Archivo', system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+    --gradient-turquoise: #79e9db;
+    --gradient-purple: #8f7fd9;
+    --turquoise: #85d2d5;
+    --purple: #8f8dd7;
+    --transparent-black: #0001
 }
 
 body {
-    overflow: hidden;
     position: relative;
     height: calc(100vh - 50px);
     display: grid;
     place-content: center;
-    color: #fff
+    color: #fff;
 }
 
 button {
@@ -41,8 +47,17 @@ button {
     font-weight: 600;
     background-color: transparent;
     color: var(--font-color);
-    border: 0
+    border: 0;
+    cursor: pointer
 }
+
+/* Top buttons:
+
+1. Change opponent
+2. Reset score
+3. Play again 
+
+*/
 
 .change-opponent,
 .reset-score,
@@ -50,9 +65,8 @@ button {
     z-index: 0;
     text-transform: uppercase;
     font-size: 1.1rem;
-    background-image: linear-gradient(to right, #aaa, #5c5c5c);
     border-radius: .3rem;
-    box-shadow: 0 0 15px 0 #0001;
+    box-shadow: 0 0 15px 0 var(--transparent-black);
     padding: 1.5rem;
     transition: .3s transform, .3s color;
     transition-timing-function: ease-out;
@@ -65,15 +79,44 @@ button {
 }
 
 .change-opponent {
+    overflow: hidden;
     display: grid;
-    grid-template-columns: 30% 15% 68%
+    grid-template-columns: 30% 15% 68%;
+    background-image: linear-gradient(to right, var(--gradient-turquoise), var(--gradient-purple))
 }
 
-.play-again {
-    transform: translateX(-25%);
-    margin-bottom: 2rem;
-    pointer-events: none
+.reset-score {
+    background-color: var(--turquoise)
 }
+
+/* By default, the Play Again button is greyed out (linear gradient), and unable to be interacted with (pointer events).
+As soon as the game ends either by a win or by a tie, the Play Again button receives the .clickable class, and becomes
+interactive */
+
+.play-again {
+    background-image: linear-gradient(to right, #aaa, #5c5c5c);
+    margin-bottom: 2rem;
+    transform: translateX(-25%);
+}
+
+.play-again.clickable {
+    background-image: none;
+    background-color: var(--purple);
+    transform: translateX(0)
+}
+
+/* The Change Opponent button is separated in three sections using <span> elements:
+
+First section: a <span> element with the "Player" text content
+Second section: a <span> element with the "VS" text content
+Third section: a <span> element with two nested <span> elements, one containing the Opponent type, which changes between
+Player and Computer on click, and one containing the Opponent difficulty level, which changes between easy, medium, and
+unbeatable (also on click).
+
+*/
+
+/* A background hover effect will be added only for the third section of the button using ::before, 
+since this is the only section that has is content changed when user clicks the button. */
 
 .change-opponent::before {
     z-index: -1;
@@ -92,6 +135,8 @@ button {
     will-change: transform, opacity
 }
 
+/* The first two span elements are visually delimited from the third element with a border */
+
 .change-opponent span:nth-child(1)::before {
     box-sizing: border-box;
     z-index: -1;
@@ -101,9 +146,10 @@ button {
     bottom: 3px;
     left: 0;
     width: 50%;
-    background-color: transparent;
     border-right: 3px solid #fffc
 }
+
+/* The third span element, containing information regarding the current Opponent type and Opponent difficulty (if applicable) */
 
 .change-opponent span:nth-child(3) {
     display: flex;
@@ -112,7 +158,7 @@ button {
     will-change: color
 }
 
-span:nth-child(3) .opponent-difficulty {
+.change-opponent span:nth-child(3) .opponent-difficulty {
     justify-self: center;
     font-size: .8rem;
     font-weight: 500;
@@ -120,11 +166,9 @@ span:nth-child(3) .opponent-difficulty {
     transform: translateY(6px);
 }
 
-.change-opponent:hover,
-.reset-score:hover,
-.play-again:hover {
-    cursor: pointer
-}
+/* The Reset Score and Play Again buttons will share the same hover effect as the one used by the Change Opponent button,
+however since the buttons do not have nested sections, their ::before hover effect will cover the entire width and 
+height (minus few pixels to simulate borders) */
 
 .reset-score::before,
 .play-again::before {
@@ -143,50 +187,36 @@ span:nth-child(3) .opponent-difficulty {
     will-change: transform, opacity
 }
 
-.change-opponent.clickable {
-    background-image: linear-gradient(to right, #79e9db, #8f7fd9);
-}
-
-.reset-score.clickable,
-.play-again.clickable {
-    background-image: none;
-}
-
-.reset-score.clickable {
-    background-color: #85d2d5
-}
-
-.play-again.clickable {
-    background-color: #8f8dd7;
-    transform: translateX(0)
-}
+/* Hover effects */
 
 @media (hover: hover) {
-    .change-opponent.clickable:hover span:nth-child(3) {
+    .change-opponent:hover span:nth-child(3) {
         color: #8CA6D7
     }
 
-    .reset-score.clickable:hover {
-        color: #85d2d5
+    .reset-score:hover {
+        color: var(--turquoise)
     }
 
     .play-again.clickable:hover {
-        color: #8f8dd7
+        color: var(--purple)
     }
 
-    .change-opponent.clickable:hover::before,
-    .reset-score.clickable:hover::before,
+    .change-opponent:hover::before,
+    .reset-score:hover::before,
     .play-again.clickable:hover::before {
         transform: scale(1);
         opacity: 1
     }
 
-    .change-opponent.clickable:active::before,
-    .reset-score.clickable:active::before,
+    .change-opponent:active::before,
+    .reset-score:active::before,
     .play-again.clickable:active::before {
         background-color: #ffffffb3;
     }
 }
+
+/* Game container, containing two score panels, one for each player (x and zero), followed by the Game panel */
 
 .container {
     justify-self: center;
@@ -194,6 +224,20 @@ span:nth-child(3) .opponent-difficulty {
     grid-template-rows: 40px auto;
     grid-template-columns: auto auto
 }
+
+/* The two score panels, each containing the value of each player and their corresponding score. The X player is located
+on the left and the Zero player is located on the right
+
+By default, the score panels have a grey color. Each score panel has its color changed by the .show class, which
+is added and removed from each panel based on the current player turn 
+
+If a winner is found, a .winner class is added to the winner's corresponding panel, which applies a translateY transform
+animation, to differentiate the winner's panel from the loser's panel.
+If the game is in a Tie state, the .show class is removed from both score panels, visually informing the user
+that both players lost, or that both players did not win
+
+*/
+
 
 #x,
 #zero {
@@ -205,7 +249,7 @@ span:nth-child(3) .opponent-difficulty {
     background-color: #858585;
     border-top-left-radius: .2rem;
     border-top-right-radius: .2rem;
-    box-shadow: 0 -5px 15px 0 #0001;
+    box-shadow: 0 -5px 15px 0 var(--transparent-black);
     transform: translateY(30%);
     transition: .3s background-color, .3s transform;
     will-change: transform, background-color
@@ -238,11 +282,11 @@ span:nth-child(3) .opponent-difficulty {
 }
 
 #x.show {
-    background-color: #85d2d5
+    background-color: var(--turquoise)
 }
 
 #zero.show {
-    background-color: #8f8dd7
+    background-color: var(--purple)
 }
 
 #x.show.winner,
@@ -257,6 +301,13 @@ span:nth-child(3) .opponent-difficulty {
     transform: translateY(0)
 }
 
+/* The panel container, which contains all 9 squares on a 3x3 grid.
+
+The panel and its squares all have a transparent background, allowing the ::before rotating gradient animation to be
+seen by the user.
+
+*/
+
 .panel-container {
     overflow: hidden;
     grid-column: 1 / 3;
@@ -266,7 +317,7 @@ span:nth-child(3) .opponent-difficulty {
     grid-template-rows: 100px 100px 100px;
     border-bottom-left-radius: .3rem;
     border-bottom-right-radius: .3rem;
-    box-shadow: 0 5px 10px 0 #0001;
+    box-shadow: 0 5px 10px 0 var(--transparent-black);
     gap: 2px;
     padding: 2px;
     touch-action: none;
@@ -281,7 +332,7 @@ span:nth-child(3) .opponent-difficulty {
     height: 150%;
     justify-self: center;
     align-self: center;
-    background-image: linear-gradient(to right, #79e9db, #8f7fd9);
+    background-image: linear-gradient(to right, var(--gradient-turquoise), var(--gradient-purple));
     animation: rotate 15s linear infinite;
 }
 
@@ -333,6 +384,9 @@ span:nth-child(3) .opponent-difficulty {
     background-size: cover;
     transform-origin: center
 }
+
+/* Depending on the value of the current player, each square receives either a .x or a .zero class on click. Each class
+shows its respective SVG's using the background-image property. */
 
 .square.x::before,
 .square.zero::before {
