@@ -66,7 +66,7 @@ button {
     text-transform: uppercase;
     font-size: 1.1rem;
     border-radius: .3rem;
-    box-shadow: 0 0 15px 0 var(--transparent-black);
+    box-shadow: 0 0 16px 0 var(--transparent-black);
     padding: 1.5rem;
     transition: .3s transform, .3s color;
     transition-timing-function: ease-out;
@@ -122,10 +122,10 @@ since this is the only section that has is content changed when user clicks the 
     z-index: -1;
     content: "";
     position: absolute;
-    top: 3px;
-    right: 3px;
-    bottom: 3px;
-    left: calc(50% + 3px);
+    top: 4px;
+    right: 4px;
+    bottom: 4px;
+    left: calc(50% + 2px);
     background-color: #ffffffe6;
     border-top-right-radius: .2rem;
     border-bottom-right-radius: .2rem;
@@ -142,11 +142,11 @@ since this is the only section that has is content changed when user clicks the 
     z-index: -1;
     content: "";
     position: absolute;
-    top: 3px;
-    bottom: 3px;
-    left: 0;
+    top: 4px;
+    bottom: 4px;
+    left: -2px;
     width: 50%;
-    border-right: 3px solid #fffc
+    border-right: 4px solid #ffffff90
 }
 
 /* The third span element, containing information regarding the current Opponent type and Opponent difficulty (if applicable) */
@@ -175,10 +175,10 @@ height (minus few pixels to simulate borders) */
     z-index: -1;
     content: "";
     position: absolute;
-    top: 3px;
-    left: 3px;
-    right: 3px;
-    bottom: 3px;
+    top: 4px;
+    left: 4px;
+    right: 4px;
+    bottom: 4px;
     background-color: #ffffffe6;
     border-radius: .2rem;
     transform: scale(0);
@@ -249,18 +249,18 @@ that both players lost, or that both players did not win
     background-color: #858585;
     border-top-left-radius: .2rem;
     border-top-right-radius: .2rem;
-    box-shadow: 0 -5px 15px 0 var(--transparent-black);
+    box-shadow: 0 -4px 16px 0 var(--transparent-black);
     transform: translateY(30%);
     transition: .3s background-color, .3s transform;
     will-change: transform, background-color
 }
 
 #x {
-    padding: 0 10px 0 3px
+    padding: 0 10px 0 4px
 }
 
 #zero {
-    padding: 0 3px 0 10px;
+    padding: 0 4px 0 10px;
     justify-self: end
 }
 
@@ -317,9 +317,9 @@ seen by the user.
     grid-template-rows: 100px 100px 100px;
     border-bottom-left-radius: .3rem;
     border-bottom-right-radius: .3rem;
-    box-shadow: 0 5px 10px 0 var(--transparent-black);
-    gap: 2px;
-    padding: 2px;
+    box-shadow: 0 6px 12px 0 var(--transparent-black);
+    gap: 4px;
+    padding: 4px;
     touch-action: none;
     will-change: transform;
 }
