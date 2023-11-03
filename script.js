@@ -4,7 +4,7 @@ const Game = (function () {
 
     const Panel = (function () {
 
-        let panel = [];
+        let _panel = [];
 
         // Pushes 9 elements into the panel array, each set to the value of null. The resulting array is where
         // the game is being played internally.
@@ -13,7 +13,7 @@ const Game = (function () {
 
             for (let i = 0; i < 9; i += 1) {
 
-                panel[i] = null;
+                _panel[i] = null;
 
             }
 
@@ -23,11 +23,11 @@ const Game = (function () {
 
         const addValue = (index, currentPlayer) => {
 
-            panel[index] = currentPlayer.getValue();
+            _panel[index] = currentPlayer.getValue();
 
         }
 
-        const getPanel = () => panel;
+        const getPanel = () => _panel;
 
         return { createPanel, addValue, getPanel };
 
@@ -40,58 +40,459 @@ const Game = (function () {
         // The default playerOne, which is always a "Human" type (in this case, the User), 
         // and has a value of "x", as he is always playing the first move
 
-        const playerOne = createPlayer();
-        playerOne.setType("Human");
-        playerOne.setValue("x");
+        const _playerOne = _createPlayer('Human', 'none', 'x', 0);
 
         // The default playerTwo, which is always second, and always has a value of "zero". In contrast 
         // with the firstPlayer, playerTwo can also be of "Computer" type, and can also have a difficulty 
         // level (easy, medium, unbeatable);
 
-        const playerTwo = createPlayer();
-        playerTwo.setType("Human");
-        playerTwo.setValue("zero");
+        const _playerTwo = _createPlayer('Human', 'none', 'zero', 0);
 
         // The createPlayer constructor function, which creates the player object with multiple methods
 
-        function createPlayer() {
+        function _createPlayer(type, difficulty, value, score) {
 
             // setType method allows for the type of the player to be changed between "Human" and "Computer"
 
-            let type;
             const setType = (newType) => type = newType;
             const getType = () => type;
 
             // setDifficulty method sets the difficulty of the player when the player type is of "Computer"
 
-            let difficulty;
             const setDifficulty = (newDifficulty) => difficulty = newDifficulty;
             const getDifficulty = () => difficulty
 
-            // setValue method sets the value of the player ('x' or 'zero')
-
-            let value;
-            const setValue = (newValue) => value = newValue;
             const getValue = () => value;
 
             // getScore returns the score or '-' when the score is 0
             // addScore method increments the score by 1 when called
 
-            let score = 0;
             const getScore = () => score > 0 ? score : "-";
             const addScore = () => score++;
             const resetScore = () => score = 0;
 
-            return { setType, getType, setDifficulty, getDifficulty, getValue, setValue, addScore, getScore, resetScore };
+            return { setType, getType, setDifficulty, getDifficulty, getValue, addScore, getScore, resetScore };
 
         }
 
-        const getPlayerOne = () => playerOne;
-        const getPlayerTwo = () => playerTwo;
+        const getPlayerOne = () => _playerOne;
+        const getPlayerTwo = () => _playerTwo;
 
         return { getPlayerOne, getPlayerTwo }
 
     })();
+
+    // The Controller module, responsible for taking input and using it to control the internal
+    // state of the game, while reflecting all changes to the Renderer module
+
+    const Controller = (function () {
+
+        // Keep track of the current player
+        let _currentPlayer = Players.getPlayerOne();
+
+        // Change the opponent type and difficulty (if applicable), and send the changes to the Renderer
+        const changeOpponent = () => {
+
+            const opponent = Players.getPlayerTwo()
+            const opponentType = opponent.getType();
+            const opponentDifficulty = opponent.getDifficulty();
+
+            const setValues = (type, difficulty) => {
+
+                opponent.setType(type);
+                opponent.setDifficulty(difficulty);
+
+            }
+
+            if (opponentType == 'Human') { setValues('Computer', 'easy') }
+
+            if (opponentDifficulty == 'easy') { setValues('Computer', 'medium') }
+
+            if (opponentDifficulty == 'medium') { setValues('Computer', 'unbeatable') }
+
+            if (opponentType == 'Computer' && opponentDifficulty == 'unbeatable') { setValues('Human', '') }
+
+            Renderer.displayOpponentType(opponent.getType())
+            Renderer.displayOpponentDifficulty(opponent.getDifficulty())
+
+            resetGame();
+            resetScore();
+
+        }
+
+        // Use the values provided by the InputHandler module to add the value of the current player
+        // in the selected square, both on screen and within the internal game, then check the status of
+        // the game to see whether a winner is found or if there are any available squares left.
+        const _makeMove = (target) => {
+
+            Renderer.displayValue(target, _currentPlayer);
+            InputHandler.disableSquare(target);
+            Panel.addValue(target, _currentPlayer);
+
+        }
+
+        const playTurn = (e) => {
+
+            _makeMove(e.target.dataset.index);
+            _checkGame();
+
+            // If after checking the game and calling the switchPlayer() function the current player became "Computer"
+            if (_currentPlayer.getType() == 'Computer') {
+
+                // Disable input for "Human" while playing computer turn
+                InputHandler.disablePanel();
+                // Ask the Computer module to generate a value based on the Panel status and difficulty level and store the value
+                const generatedValue = Computer.generateValue(Panel.getPanel(), _currentPlayer.getDifficulty());
+                setTimeout(() => {
+
+                    // Use the values provided by the Computer module to add the value of the current player
+                    // in the selected square, both on screen and within the internal game, then check the status of
+                    // the game to see whether a winner is found or if there are any available squares left.
+                    _makeMove(generatedValue)
+                    InputHandler.enablePanel();
+                    _checkGame();
+
+                }, 500)
+
+            }
+
+        }
+
+        // A more complicated version of the checkGame function
+        const _checkGame = () => {
+
+            // If a winner or a tie is found, gameEnded becomes true
+            let gameEnded;
+            const panel = Panel.getPanel();
+            const currentPlayerValue = _currentPlayer.getValue();
+
+            // Winning combinations - horizontal, vertical, diagonal
+            const filters = [
+
+                [0, 1, 2],
+                [3, 4, 5],
+                [6, 7, 8],
+                [0, 3, 6],
+                [1, 4, 7],
+                [2, 5, 8],
+                [2, 4, 6],
+                [0, 4, 8]
+
+            ];
+
+            const findWinner = (first, second, third) => {
+
+                if (
+
+                    panel[first] == currentPlayerValue &&
+                    panel[second] == currentPlayerValue &&
+                    panel[third] == currentPlayerValue
+
+                ) {
+                    // If a winner is found, send the winning combination to Renderer so it can display the winning path
+                    gameEnded = true;
+                    Renderer.displayWinningPath(first, second, third);
+                    _endGame("winner");
+
+                }
+
+            }
+
+            for (const filter of filters) {
+
+                if (gameEnded) break;
+
+                findWinner(...filter);
+
+            }
+
+            // If a winner is not found but no available squares are left, assume it's a tie and endGame()
+            if (!gameEnded && panel.every(value => value != null)) {
+
+                gameEnded = true;
+                _endGame();
+
+            }
+
+            // While the game is running, keep switching the player turn after each game check, and notify the Renderer
+            // that it also needs to reflect the current player on screen
+
+            if (!gameEnded) {
+
+                _switchPlayerTurn();
+                Renderer.displayTurn(_currentPlayer);
+
+            }
+
+        }
+
+        const _switchPlayerTurn = () => {
+
+            _currentPlayer == Players.getPlayerOne() ?
+                _currentPlayer = Players.getPlayerTwo() :
+                _currentPlayer = Players.getPlayerOne();
+
+        }
+
+        const resetScore = () => {
+
+            Players.getPlayerOne().resetScore();
+            Players.getPlayerTwo().resetScore();
+            Renderer.updateScore(Players.getPlayerOne(), Players.getPlayerTwo());
+
+        }
+
+        const resetGame = () => {
+
+            Renderer.refreshPanel();
+            Renderer.removeWinningPath();
+            Renderer.hideWinner(_currentPlayer);
+            _currentPlayer = Players.getPlayerOne();
+            Renderer.displayTurn(_currentPlayer);
+            // Re-enable input for panel and its squares
+            InputHandler.attachClickEvents();
+            InputHandler.enablePanel();
+            // Disable input for Play Again button
+            InputHandler.disablePlayButton();
+            // Create new internal panel
+            Panel.createPanel();
+
+        }
+
+        const _endGame = (condition) => {
+
+            InputHandler.disablePanel();
+
+            const gameWon = () => {
+
+                _currentPlayer.addScore();
+                Renderer.displayWinner(_currentPlayer);
+                Renderer.updateScore(Players.getPlayerOne(), Players.getPlayerTwo());
+
+            }
+
+            // If the game ended with a tie, stop showing the turn of the current player. With the help of CSS,
+            // this will remove the color that represents the fact that a certain player is currently playing,
+            // making both players look the same on screen, which signifies a tie
+            const tie = () => { Renderer.hideTurn(_currentPlayer); }
+
+            condition == 'winner' ? gameWon() : tie();
+
+            // Re-enable input for "Play again" button
+            InputHandler.enablePlayButton();
+
+        }
+
+        return { changeOpponent, resetGame, resetScore, playTurn };
+
+    })();
+
+    // The Renderer module, responsible for displaying the internal status of the game on screen
+
+    const Renderer = (function () {
+
+        // Caching the DOM
+        const _opponentButton = document.querySelector('.change-opponent');
+        const _opponentTypeInfo = _opponentButton.querySelector('.opponent-type');
+        const _opponentDifficultyInfo = _opponentButton.querySelector('.opponent-difficulty');
+        const _resetButton = document.querySelector('.reset-score');
+        const _playAgainButton = document.querySelector('.play-again');
+        const _xInfo = document.querySelector('#x');
+        const _xScore = _xInfo.querySelector('.score');
+        const _zeroInfo = document.querySelector('#zero');
+        const _zeroScore = _zeroInfo.querySelector('.score');
+        const _panelContainer = document.querySelector('.panel-container');
+        const _squares = _panelContainer.getElementsByClassName('square');
+
+        const getOpponentButton = () => _opponentButton;
+        const getResetButton = () => _resetButton;
+        const getPlayAgainButton = () => _playAgainButton;
+        const getPanelContainer = () => _panelContainer;
+        const getSquares = () => _squares;
+
+        // Create a square element for each panel array item and set the index for each square element to the index
+        // of its corresponding array item
+        const renderPanel = () => {
+
+            _panelContainer.textContent = "";
+
+            Panel.getPanel().forEach((value, index) => {
+
+                const square = document.createElement("button");
+                square.dataset.index = index;
+                square.classList.add("square");
+                _panelContainer.appendChild(square);
+
+            })
+
+        };
+
+        const refreshPanel = () => {
+
+            for (let square of _squares) {
+
+                square.classList.remove('x');
+                square.classList.remove('zero');
+                square.textContent = "";
+
+            }
+
+        }
+
+        const displayOpponentType = (opponentType) => {
+
+            if (opponentType == 'Human') { _opponentTypeInfo.textContent = "Player"; }
+            else { _opponentTypeInfo.textContent = opponentType }
+
+        }
+
+        const displayOpponentDifficulty = (opponentDifficulty) => {
+
+            _opponentDifficultyInfo.textContent = opponentDifficulty;
+
+        }
+
+        const displayValue = (index, currentPlayer) => {
+
+            _squares[index].classList.add(currentPlayer.getValue());
+            // Adding '.' to the square element ensures that the CSS :empty selector no longer works, which is used
+            // to add a hover effect that should only be working when the square is empty
+            _squares[index].textContent = ".";
+
+        }
+
+
+        const displayTurn = (currentPlayer) => {
+
+            currentPlayer.getValue() == "x" ?
+                _xInfo.classList.add('show') & _zeroInfo.classList.remove('show') :
+                _zeroInfo.classList.add('show') & _xInfo.classList.remove('show');
+
+        }
+
+        const hideTurn = (currentPlayer) => {
+
+            currentPlayer.getValue() == "x" ?
+                _xInfo.classList.remove('show') :
+                _zeroInfo.classList.remove('show');
+
+        }
+
+        const updateScore = (playerOne, playerTwo) => {
+
+            _xScore.textContent = playerOne.getScore();
+            _zeroScore.textContent = playerTwo.getScore();
+
+        }
+
+        const displayWinner = (winner) => {
+
+            winner.getValue() == 'x' ?
+                _xInfo.classList.add('winner') :
+                _zeroInfo.classList.add('winner')
+
+        }
+
+        const hideWinner = (winner) => {
+
+            winner.getValue() == 'x' ?
+                _xInfo.classList.remove('winner') :
+                _zeroInfo.classList.remove('winner')
+
+        }
+
+        const displayWinningPath = (first, second, third) => {
+
+            _squares[first].classList.add('winner');
+            _squares[second].classList.add('winner');
+            _squares[third].classList.add('winner');
+
+        }
+
+        const removeWinningPath = () => {
+
+            for (let square of _squares) {
+
+                square.classList.remove('winner');
+
+            }
+
+        }
+
+        return { getOpponentButton, getResetButton, getPlayAgainButton, getPanelContainer, getSquares, displayOpponentType, displayOpponentDifficulty, renderPanel, refreshPanel, displayTurn, hideTurn, updateScore, displayValue, displayWinner, hideWinner, displayWinningPath, removeWinningPath };
+
+    })();
+
+    // The InputHandler module, which is responsible for gathering all the elements provided by the Renderer
+    // and adding Event Listeners to them. The event listeners are further responsible for sending
+    // input information to the Controller module, which controls the flow of the game
+
+    const InputHandler = (function () {
+
+        Renderer.getOpponentButton().addEventListener('click', Controller.changeOpponent);;
+        Renderer.getResetButton().addEventListener('click', Controller.resetScore);
+
+        const attachClickEvents = () => {
+
+            for (let square of Renderer.getSquares()) {
+
+                square.addEventListener('click', Controller.playTurn);
+                square.removeAttribute('inert');
+
+            }
+
+        }
+
+        const enablePlayButton = () => {
+
+            setTimeout(() => {
+
+                Renderer.getPlayAgainButton().addEventListener('click', Controller.resetGame);
+                Renderer.getPlayAgainButton().classList.add('clickable');
+                Renderer.getPlayAgainButton().removeAttribute('inert', 'false');
+                Renderer.getPlayAgainButton().focus();
+
+            }, 300)
+
+        }
+
+        const disablePlayButton = () => {
+
+            setTimeout(() => {
+
+                Renderer.getPlayAgainButton().removeEventListener('click', Controller.resetGame);
+                Renderer.getPlayAgainButton().classList.remove('clickable');
+                Renderer.getPlayAgainButton().setAttribute('inert', 'true');
+                Renderer.getPlayAgainButton().blur();
+
+            }, 300)
+
+        }
+
+        const enablePanel = () => {
+
+            Renderer.getPanelContainer().removeAttribute('inert');
+
+        }
+
+        const disablePanel = () => {
+
+            Renderer.getPanelContainer().setAttribute('inert', 'true');
+
+        }
+
+
+        const disableSquare = (index) => {
+
+            Renderer.getSquares()[index].removeEventListener('click', Controller.playTurn);
+            Renderer.getSquares()[index].setAttribute('inert', 'true');
+            Renderer.getSquares()[index].blur();
+
+        }
+
+        return { attachClickEvents, enablePanel, disablePanel, disableSquare, enablePlayButton, disablePlayButton };
+
+    })()
 
     // Computer module, responsible for generating the Computer move when the opponent type is set to "Computer"
 
@@ -99,7 +500,7 @@ const Game = (function () {
 
         // Generates a random value from all available values
 
-        const generateRandomValue = () => {
+        const _generateRandomValue = () => {
 
             const mappedSquares = Panel.getPanel().map((square, index) => { if (square == null) { return index } });
             const filteredSquares = mappedSquares.filter(square => square != undefined);
@@ -121,7 +522,7 @@ const Game = (function () {
 
                 case "easy":
 
-                    return generateRandomValue()
+                    return _generateRandomValue()
                     break;
 
                 // When difficulty is set to medium, make sure that the first move is always random, and then start generating moves
@@ -129,7 +530,7 @@ const Game = (function () {
 
                 case "medium":
 
-                    if (panel.filter(square => square == 'x').length <= 1) { return generateRandomValue() }
+                    if (panel.filter(square => square == 'x').length <= 1) { return _generateRandomValue() }
 
                     else {
 
@@ -152,7 +553,7 @@ const Game = (function () {
                                 // Set the value of the current square to "zero"
                                 panel[i] = Players.getPlayerTwo().getValue();
                                 // Start recursion to find the score of this move
-                                let score = minimax(panel, 0, false);
+                                let score = _minimax(panel, 0, false);
                                 // Push the score of this move into moveScores
                                 moveScores.push(score);
                                 // After the score is found, set the current square value back to null
@@ -191,7 +592,7 @@ const Game = (function () {
                                 if (panel[i] == null) {
 
                                     panel[i] = Players.getPlayerOne().getValue();
-                                    let score = minimax(panel, 0, true);
+                                    let score = _minimax(panel, 0, true);
                                     panel[i] = null;
 
                                     if (score < bestScore) {
@@ -229,7 +630,7 @@ const Game = (function () {
                         if (panel[i] == null) {
 
                             panel[i] = Players.getPlayerTwo().getValue();
-                            let score = minimax(panel, 0, false);
+                            let score = _minimax(panel, 0, false);
                             moveScores.push(score);
                             panel[i] = null;
 
@@ -252,7 +653,7 @@ const Game = (function () {
 
         // A simplified version of checkGame function, which is responsible for finding a winner or a tie
 
-        const checkGame = (panel, player) => {
+        const _checkGame = (panel, player) => {
 
             // If winner is found, the foundWinner variable is set to true
             let foundWinner;;
@@ -288,7 +689,7 @@ const Game = (function () {
 
         }
 
-        const minimax = (panel, depth, isMaximizing) => {
+        const _minimax = (panel, depth, isMaximizing) => {
 
             // Get all currently available squares
             const availableSquares = panel.filter(square => square == null);
@@ -298,8 +699,8 @@ const Game = (function () {
             // If it's a tie, return 0
             // Depth is used to help the minimax algorithm choose the quickest path towards winning
             // and the longest path towards losing
-            if (checkGame(panel, Players.getPlayerTwo().getValue())) { return 100 - depth; }
-            else if (checkGame(panel, Players.getPlayerOne().getValue())) { return -100 + depth; }
+            if (_checkGame(panel, Players.getPlayerTwo().getValue())) { return 100 - depth; }
+            else if (_checkGame(panel, Players.getPlayerOne().getValue())) { return -100 + depth; }
             else if (availableSquares.length === 0) { return 0; }
 
             if (isMaximizing) {
@@ -312,7 +713,7 @@ const Game = (function () {
 
                         panel[i] = Players.getPlayerTwo().getValue();
                         // Increase depth with each recursion
-                        let score = minimax(panel, depth + 1, false);
+                        let score = _minimax(panel, depth + 1, false);
                         panel[i] = null;
                         bestScore = Math.max(score, bestScore);
 
@@ -332,7 +733,7 @@ const Game = (function () {
 
                         panel[i] = Players.getPlayerOne().getValue();
                         // Increase depth with each recursion
-                        let score = minimax(panel, depth + 1, true);
+                        let score = _minimax(panel, depth + 1, true);
                         panel[i] = null;
                         bestScore = Math.min(score, bestScore);
 
@@ -350,407 +751,6 @@ const Game = (function () {
 
     })();
 
-    // The Controller module, responsible for taking input and using it to control the internal
-    // state of the game, while reflecting all changes to the Renderer module
-
-    const Controller = (function () {
-
-        // Keep track of the current player
-        let currentPlayer = Players.getPlayerOne();
-
-        // Change the opponent type and difficulty (if applicable), and send the changes to the Renderer
-        const changeOpponent = () => {
-
-            const opponent = Players.getPlayerTwo()
-            const opponentType = opponent.getType();
-            const opponentDifficulty = opponent.getDifficulty();
-
-            const setValues = (type, difficulty) => {
-
-                opponent.setType(type);
-                opponent.setDifficulty(difficulty);
-
-            }
-
-            if (opponentType == 'Human') { setValues('Computer', 'easy') }
-
-            if (opponentDifficulty == 'easy') { setValues('Computer', 'medium') }
-
-            if (opponentDifficulty == 'medium') { setValues('Computer', 'unbeatable') }
-
-            if (opponentType == 'Computer' && opponentDifficulty == 'unbeatable') { setValues('Human', '') }
-
-            Renderer.displayOpponentType(opponent.getType())
-            Renderer.displayOpponentDifficulty(opponent.getDifficulty())
-
-            resetGame();
-            resetScore();
-
-        }
-
-        // Use the values provided by the InputHandler module to add the value of the current player
-        // in the selected square, both on screen and within the internal game, then check the status of
-        // the game to see whether a winner is found or if there are any available squares left.
-        const playTurn = (e) => {
-
-            Renderer.displayValue(e.target.dataset.index, currentPlayer);
-            InputHandler.disableSquare(e.target.dataset.index);
-            Panel.addValue(e.target.dataset.index, currentPlayer);
-            checkGame();
-
-            // If the opponent is "Computer", switch to playComputerTurn()
-            if (currentPlayer.getType() == 'Computer') { playComputerTurn() }
-
-        }
-
-        const playComputerTurn = () => {
-
-            // Disable input for "Human" while playing computer turn
-            InputHandler.disablePanel();
-
-            // Ask the Computer module to generate a value based on the Panel status and difficulty level and store the value
-            const generatedValue = Computer.generateValue(Panel.getPanel(), currentPlayer.getDifficulty());
-
-            setTimeout(() => {
-
-                // Use the values provided by the Computer module to add the value of the current player
-                // in the selected square, both on screen and within the internal game, then check the status of
-                // the game to see whether a winner is found or if there are any available squares left.
-                Renderer.displayValue(generatedValue, currentPlayer);
-                InputHandler.disableSquare(generatedValue);
-                Panel.addValue(generatedValue, currentPlayer);
-                InputHandler.enablePanel();
-                checkGame();
-
-            }, 500)
-
-        }
-
-        // A more complicated version of the checkGame function
-        const checkGame = () => {
-
-            // If a winner or a tie is found, gameEnded becomes true
-            let gameEnded;
-            const panel = Panel.getPanel();
-            const currentPlayerValue = currentPlayer.getValue();
-
-            // Winning combinations - horizontal, vertical, diagonal
-            const filters = [
-
-                [0, 1, 2],
-                [3, 4, 5],
-                [6, 7, 8],
-                [0, 3, 6],
-                [1, 4, 7],
-                [2, 5, 8],
-                [2, 4, 6],
-                [0, 4, 8]
-
-            ];
-
-            const findWinner = (first, second, third) => {
-
-                if (
-
-                    panel[first] == currentPlayerValue &&
-                    panel[second] == currentPlayerValue &&
-                    panel[third] == currentPlayerValue
-
-                ) {
-                    // If a winner is found, send the winning combination to Renderer so it can display the winning path
-                    gameEnded = true;
-                    Renderer.displayWinningPath(first, second, third);
-                    endGame("winner");
-
-                }
-
-            }
-
-            for (const filter of filters) {
-
-                if (gameEnded) break;
-
-                findWinner(...filter);
-
-            }
-
-            // If a winner is not found but no available squares are left, assume it's a tie and endGame()
-            if (!gameEnded && panel.every(value => value != null)) {
-
-                gameEnded = true;
-                endGame();
-
-            }
-
-            // While the game is running, keep switching the player turn after each game check, and notify the Renderer
-            // that it also needs to reflect the current player on screen
-
-            if (!gameEnded) {
-
-                switchPlayerTurn();
-                Renderer.displayTurn(currentPlayer);
-
-            }
-
-        }
-
-        const switchPlayerTurn = () => {
-
-            currentPlayer == Players.getPlayerOne() ?
-                currentPlayer = Players.getPlayerTwo() :
-                currentPlayer = Players.getPlayerOne();
-
-        }
-
-        const resetScore = () => {
-
-            Players.getPlayerOne().resetScore();
-            Players.getPlayerTwo().resetScore();
-            Renderer.updateScore(Players.getPlayerOne(), Players.getPlayerTwo());
-
-        }
-
-        const resetGame = () => {
-
-            Renderer.refreshPanel();
-            Renderer.removeWinningPath();
-            Renderer.hideWinner(currentPlayer);
-            currentPlayer = Players.getPlayerOne();
-            Renderer.displayTurn(currentPlayer);
-            // Re-enable input for panel and its squares
-            InputHandler.enablePanel();
-            InputHandler.enableSquares();
-            // Disable input for Play Again button
-            InputHandler.disablePlayButton();
-            // Create new internal panel
-            Panel.createPanel();
-
-        }
-
-        const endGame = (condition) => {
-
-            InputHandler.disablePanel();
-
-            const gameWon = () => {
-
-                currentPlayer.addScore();
-                Renderer.displayWinner(currentPlayer);
-                Renderer.updateScore(Players.getPlayerOne(), Players.getPlayerTwo());
-
-            }
-
-            // If the game ended with a tie, stop showing the turn of the current player. With the help of CSS,
-            // this will remove the color that represents the fact that a certain player is currently playing,
-            // making both players look the same on screen, which signifies a tie
-            const tie = () => { Renderer.hideTurn(currentPlayer); }
-
-            condition == 'winner' ? gameWon() : tie();
-
-            // Re-enable input for "Play again" button
-            InputHandler.enablePlayButton();
-
-        }
-
-        return { changeOpponent, resetGame, resetScore, playTurn };
-
-    })();
-
-    // The Renderer module, responsible for displaying the internal status of the game on screen
-
-    const Renderer = (function () {
-
-        const opponentButton = document.querySelector('.change-opponent');
-        const resetButton = document.querySelector('.reset-score');
-        const playAgainButton = document.querySelector('.play-again');
-        const panelContainer = document.querySelector('.panel-container');
-        const squares = panelContainer.getElementsByClassName('square');
-
-        const getOpponentButton = () => opponentButton;
-        const getResetButton = () => resetButton;
-        const getPlayAgainButton = () => playAgainButton;
-        const getPanelContainer = () => panelContainer;
-        const getSquares = () => squares;
-
-        // Create a square element for each panel array item and set the index for each square element to the index
-        // of its corresponding array item
-        const renderPanel = () => {
-
-            panelContainer.textContent = "";
-
-            Panel.getPanel().forEach((value, index) => {
-
-                const square = document.createElement("button");
-                square.dataset.index = index;
-                square.classList.add("square");
-                panelContainer.appendChild(square);
-
-            })
-
-        };
-
-        const refreshPanel = () => {
-
-            for (let square of squares) {
-
-                square.classList.remove('x');
-                square.classList.remove('zero');
-                square.textContent = "";
-
-            }
-
-        }
-
-        const displayOpponentType = (opponentType) => {
-
-            if (opponentType == 'Human') { opponentButton.querySelector('.opponent-type').textContent = "Player"; }
-            else { opponentButton.querySelector('.opponent-type').textContent = opponentType }
-
-        }
-
-        const displayOpponentDifficulty = (opponentDifficulty) => {
-
-            opponentButton.querySelector('.opponent-difficulty').textContent = opponentDifficulty;
-
-        }
-
-        const displayValue = (index, currentPlayer) => {
-
-            squares[index].classList.add(currentPlayer.getValue());
-            // Adding '.' to the square element ensures that the CSS :empty selector no longer works, which is used
-            // to add a hover effect that should only be working when the square is empty
-            squares[index].textContent = ".";
-
-        }
-
-
-        const displayTurn = (currentPlayer) => {
-
-            document.getElementById(currentPlayer.getValue()).classList.add('show');
-            document.getElementById(currentPlayer.getValue() == "x" ? "zero" : "x").classList.remove('show');
-
-        }
-
-        const hideTurn = (currentPlayer) => {
-
-            document.getElementById(currentPlayer.getValue()).classList.remove('show');
-
-        }
-
-        const updateScore = (playerOne, playerTwo) => {
-
-            document.getElementById(playerOne.getValue()).lastElementChild.textContent = playerOne.getScore();
-            document.getElementById(playerTwo.getValue()).firstElementChild.textContent = playerTwo.getScore();
-
-        }
-
-        const displayWinner = (winner) => {
-
-            document.getElementById(winner.getValue()).classList.add('winner');
-
-        }
-
-        const hideWinner = (winner) => {
-
-            document.getElementById(winner.getValue()).classList.remove('winner');
-
-        }
-
-        const displayWinningPath = (first, second, third) => {
-
-            squares[first].classList.add('winner');
-            squares[second].classList.add('winner');
-            squares[third].classList.add('winner');
-
-        }
-
-        const removeWinningPath = () => {
-
-            for (let square of squares) {
-
-                square.classList.remove('winner');
-
-            }
-
-        }
-
-        return { getOpponentButton, getResetButton, getPlayAgainButton, getPanelContainer, getSquares, displayOpponentType, displayOpponentDifficulty, renderPanel, refreshPanel, displayTurn, hideTurn, updateScore, displayValue, displayWinner, hideWinner, displayWinningPath, removeWinningPath };
-
-    })();
-
-    // The InputHandler module, which is responsible for gathering all the elements provided by the Renderer
-    // and adding Event Listeners to them. The event listeners are further responsible for sending
-    // input information to the Controller module, which controls the flow of the game
-
-    const InputHandler = (function () {
-
-        Renderer.getOpponentButton().addEventListener('click', Controller.changeOpponent);;
-        Renderer.getResetButton().addEventListener('click', Controller.resetScore);
-        Renderer.getPlayAgainButton().addEventListener('click', Controller.resetGame);
-
-        const attachClickEvents = () => {
-
-            for (let square of Renderer.getSquares()) {
-
-                square.addEventListener('click', Controller.playTurn);
-
-            }
-
-        }
-
-        const enablePlayButton = () => {
-
-            setTimeout(() => {
-
-                Renderer.getPlayAgainButton().classList.add('clickable');
-                Renderer.getPlayAgainButton().removeAttribute('inert', 'false');
-                Renderer.getPlayAgainButton().focus();
-
-            }, 300)
-
-        }
-
-        const disablePlayButton = () => {
-
-            setTimeout(() => {
-
-                Renderer.getPlayAgainButton().classList.remove('clickable');
-                Renderer.getPlayAgainButton().setAttribute('inert', 'true');
-                Renderer.getPlayAgainButton().blur();
-
-            }, 300)
-
-        }
-
-        const enablePanel = () => {
-            Renderer.getPanelContainer().removeAttribute('inert');
-        }
-
-        const disablePanel = () => {
-            Renderer.getPanelContainer().setAttribute('inert', 'true');
-        }
-
-
-        const disableSquare = (index) => {
-
-            Renderer.getSquares()[index].setAttribute('inert', 'true');
-            Renderer.getSquares()[index].blur();
-
-        }
-
-        const enableSquares = () => {
-
-            for (const square of Renderer.getSquares()) {
-
-                square.removeAttribute('inert');
-
-            }
-
-        }
-
-        return { attachClickEvents, enablePanel, disablePanel, enableSquares, disableSquare, enablePlayButton, disablePlayButton };
-
-    })()
-
     Panel.createPanel();
     Renderer.renderPanel();
     Renderer.displayOpponentType(Players.getPlayerTwo().getType());
@@ -758,4 +758,3 @@ const Game = (function () {
     InputHandler.attachClickEvents();
 
 })();
-
